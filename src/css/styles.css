@@ -1,0 +1,19 @@
+* {
+    box-sizing:border-box;
+}
+
+body {
+    color:white;
+    background-color:#303;
+    overflow:hidden;
+    margin:0;
+    text-align:center;
+}
+
+canvas {
+    background-color:#909;
+    border: 8px solid #f0f;
+    width:100%;
+    max-width:640px;
+    margin:0px auto;
+}
