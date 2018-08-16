@@ -13,33 +13,43 @@ let ship = kontra.sprite({
     y: 80,
     width: 6,  // we'll use this later for collision detection
     rotation: 0,
+    ttl: Infinity,
     dashFrames: 0,
-    render() {
-        this.context.save();
-        this.context.translate(this.x, this.y);
-        this.context.rotate(degreesToRadians(this.rotation));
-
-        this.context.beginPath();
-        // draw a triangle
-        this.context.moveTo(-3, -5);
-        this.context.lineTo(12, 0);
-        this.context.lineTo(-3, 5);
-        
-        this.context.closePath();
-        this.context.stroke();
-        this.context.restore();
-    },
+    iFrames: 0,
+    stunFrames: 0,
     update() {
-        this.dx = this.dy = 0;
-        if (kontra.keys.pressed('w')) { this.dy += -3; }
-        if (kontra.keys.pressed('s')) { this.dy += 3; }
-        if (kontra.keys.pressed('a')) { this.dx += -3; }
-        if (kontra.keys.pressed('d')) { this.dx += 3; }
-        if (this.dx && this.dy) {
-            this.dx *= 0.707;
-            this.dy *= 0.707;
+        if (this.stunFrames > 0) {
+            this.stunFrames--;
+            this.rotation += 4;
+        } else {
+            this.dx = this.dy = 0;
+            if (kontra.keys.pressed('w')) { this.dy += -3; }
+            if (kontra.keys.pressed('s')) { this.dy += 3; }
+            if (kontra.keys.pressed('a')) { this.dx += -3; }
+            if (kontra.keys.pressed('d')) { this.dx += 3; }
+            if (this.dx && this.dy) {
+                this.dx *= 0.707;
+                this.dy *= 0.707;
+            }
+            if (this.dy || this.dx) {
+                this.rotation = Math.atan2(this.dy, this.dx) * 180 / Math.PI;
+                // Shoot particles out the back
+                for (let i = 0; i < (this.dashFrames/10)+1; i++) {
+                    let particle = kontra.sprite({
+                        type:'particle',
+                        x: this.x,
+                        y: this.y,
+                        dx: this.dx * -1 + Math.random()*4-2,
+                        dy: this.dy * -1 + Math.random()*4-2,
+                        ttl: 8,
+                        width:2,
+                        height:2,
+                        color:'black'
+                    })
+                    sprites.push(particle)
+                }
+            }
         }
-        if (this.dy || this.dx) this.rotation = Math.atan2(this.dy, this.dx) * 180 / Math.PI; // Point the ship using dx and dy
         if (this.dashFrames > 0 ) {
             this.dx *= (Math.pow(this.dashFrames,2)+120)/120;
             this.dy *= (Math.pow(this.dashFrames,2)+120)/120;
@@ -49,6 +59,21 @@ let ship = kontra.sprite({
             this.iFrames--;
         }
         this.advance()
+    },
+    render() {
+        this.context.save();
+        this.context.translate(this.x, this.y);
+        this.context.rotate(degreesToRadians(this.rotation));
+
+        this.context.beginPath();
+        // draw a triangle
+        this.context.moveTo(-6, -6);
+        this.context.lineTo(12, 0);
+        this.context.lineTo(-6, 6);
+        
+        this.context.closePath();
+        this.context.stroke();
+        this.context.restore();
     }
 });
 sprites.push(ship);
@@ -57,33 +82,21 @@ kontra.keys.bind('space', function () {
   this.dashFrames = 30
   this.iFrames = 30
 }.bind(ship))
-let sprite = kontra.sprite({
-  x: 100,        // starting x,y position of the sprite
-  y: 80,
-  color: 'red',  // fill color of the sprite rectangle
-  width: 20,     // width and height of the sprite rectangle
-  height: 40,
-  dx: 3          // move the sprite 2px to the right every frame
-});
-sprites.push(sprite)
 
 let loop = kontra.gameLoop({  // create the main game loop
-  update: function() {        // update the game state
-    for(let i=0; i < sprites.length; i++) {
-      sprites[i].update();
-  }
-
-    // wrap the sprites position when it reaches
-    // the edge of the screen
-    if (sprite.x > kontra.canvas.width) {
-      sprite.x = -sprite.width;
-  }
-},
-  render: function() {        // render the game state
-    for (let i=0; i<sprites.length; i++){
-      sprites[i].render();
-  }
-}
+    update: function() {        // update the game state
+        for(let i=0; i < sprites.length; i++) {
+            sprites[i].update();
+            // Wrap the stage bc why not
+            sprites[i].x = (sprites[i].x + kontra.canvas.width) % kontra.canvas.width
+            sprites[i].y = (sprites[i].y + kontra.canvas.height) % kontra.canvas.height
+        }
+        sprites = sprites.filter(sprite => sprite.isAlive());
+    },
+    render: function() {        // render the game state
+        sprites.map(sprite => sprite.render())
+        
+    }   
 });
 
 loop.start();    // start the game

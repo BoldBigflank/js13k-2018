@@ -4,8 +4,8 @@ Player
 X moves with arrow keys
 X moves diagonally
 X rotates to face direction
-invuln frames/dash frames/stun frames
-Rocket particles
+X invuln frames/dash frames/stun frames
+X Rocket particles
 
 Obstacles
 position/rotation functions?
