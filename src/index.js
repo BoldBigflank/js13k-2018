@@ -11,7 +11,8 @@ let sprites = [];
 let ship = kontra.sprite({
     x: 80,
     y: 80,
-    width: 6,  // we'll use this later for collision detection
+    width: 12,  // we'll use this later for collision detection
+    height: 12,
     rotation: 0,
     ttl: Infinity,
     dashFrames: 0,
@@ -79,18 +80,42 @@ let ship = kontra.sprite({
 sprites.push(ship);
 kontra.keys.bind('space', function () {
   if (this.dashFrames > 0) return;
+  if (this.stunFrames > 0) return;
   this.dashFrames = 30
   this.iFrames = 30
 }.bind(ship))
 
 let loop = kontra.gameLoop({  // create the main game loop
     update: function() {        // update the game state
-        for(let i=0; i < sprites.length; i++) {
-            sprites[i].update();
-            // Wrap the stage bc why not
-            sprites[i].x = (sprites[i].x + kontra.canvas.width) % kontra.canvas.width
-            sprites[i].y = (sprites[i].y + kontra.canvas.height) % kontra.canvas.height
+        if (!this.nextTear) {
+            let tear = kontra.sprite({
+                type: 'enemy',
+                width:6,
+                height:6,
+                dx: Math.random()*12-6,
+                ddy:.2,
+                x:kontra.canvas.width/2,
+                y:kontra.canvas.height/2,
+                ttl: 49
+            })
+            sprites.push(tear)
+            this.nextTear = 15;
         }
+        this.nextTear--;
+
+        sprites.map(sprite => {
+            sprite.update();
+            // Wrap the stage bc why not
+            sprite.x = (sprite.x + kontra.canvas.width) % kontra.canvas.width
+            sprite.y = (sprite.y + kontra.canvas.height) % kontra.canvas.height
+            if (!ship.iFrames && sprite.type === 'enemy' && ship.collidesWith(sprite)) {
+                ship.stunFrames = 45;
+                ship.iFrames = 60;
+                let angle = Math.random()*2*Math.PI;
+                ship.dx = Math.cos(angle)*4;
+                ship.dy = Math.sin(angle)*4;
+            }
+        })
         sprites = sprites.filter(sprite => sprite.isAlive());
     },
     render: function() {        // render the game state

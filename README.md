@@ -6,12 +6,21 @@ X moves diagonally
 X rotates to face direction
 X invuln frames/dash frames/stun frames
 X Rocket particles
+Health/display
 
 Obstacles
+X collision
 position/rotation functions?
-ttl
+X ttl
 delay
 Associated music?
+
+Obstacle types
+Blue square
+X tears
+rotating/bursting lines
+fireworks
+
 
 Sounds
 Different sounds
