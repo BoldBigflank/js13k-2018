@@ -6,7 +6,7 @@ const ExtractTextPlugin = require('extract-text-webpack-plugin')
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 
 module.exports = {
-    mode: "development",
+    mode: "production",
     entry: './src/index.js',
     module: {
         rules: [{

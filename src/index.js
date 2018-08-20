@@ -1,9 +1,62 @@
 import './css/styles.css'
 import './js/kontra'
+import { Note, Sequence } from 'tinymusic'
 
 function degreesToRadians(degrees) {
   return degrees * Math.PI / 180;
 }
+
+// create a new Web Audio API context
+var ac = new AudioContext(),
+    when = ac.currentTime;
+
+// set the playback tempo (120 beats per minute)
+var tempo = 67;
+
+// create some notes ('<Note Name> <Beat Length>')
+// q = quarter note, h = half note (more on that later)
+var drone = ['F4 w', 'F4 w'],
+    run = [
+    'F3 q',
+    'Ab3 q',
+    'F4 q',
+    'Ab4 q',
+    'F5 q',
+    'Ab5 q',
+    'F5 q',
+    'Ab4 q',
+    'F4 q',
+    'Ab3 q'
+],
+    bass = [
+    'F2 5',
+    'Eb2 5',
+    'Bb1 5',
+    'Db2 6'
+]
+
+
+// create a new droneSeq
+var droneSeq = new Sequence( ac, tempo, drone ),
+    runSeq = new Sequence( ac, tempo, run),
+    bassSeq = new Sequence( ac, tempo, bass)
+runSeq.staccato = 0.55;
+
+droneSeq.gain.gain.value = 0.05;
+runSeq.gain.gain.value = 0.1;
+bassSeq.gain.gain.value = 0.05;
+
+droneSeq.createCustomWave([1.0, 0.11, 0.88, 0.55, 0.77, 0.33, 0.33, 0.33, 0.44, 0.11, 0.22]);
+runSeq.waveType = 'triangle'
+
+// disable looping
+droneSeq.loop = true;
+runSeq.loop = true;
+
+// play it
+droneSeq.play();
+runSeq.play();
+bassSeq.play( when + ( 60 / tempo ) * 14 )
 
 kontra.init()
 let sprites = [];
