@@ -11,30 +11,46 @@ var ac = new AudioContext(),
     when = ac.currentTime;
 
 // set the playback tempo (120 beats per minute)
-var tempo = 67;
+var tempo = 64;
 
 // create some notes ('<Note Name> <Beat Length>')
 // q = quarter note, h = half note (more on that later)
 var drone = ['F4 w', 'F4 w'],
     run = [
-    'F3 q',
-    'Ab3 q',
-    'F4 q',
-    'Ab4 q',
-    'F5 q',
-    'Ab5 q',
-    'F5 q',
-    'Ab4 q',
-    'F4 q',
-    'Ab3 q'
+    '- w' // Start with 4 beats of silence
 ],
     bass = [
     'F2 5',
     'Eb2 5',
     'Bb1 5',
+    'Db2 6',
+    'F2 5', // Repeated twice
+    'Eb2 5',
+    'Bb1 5',
+    'Db2 6',
+    'F2 5',
+    'Eb2 5',
+    'Bb1 5',
     'Db2 6'
+], runNotes = [
+    'F3 ',
+    'Ab3 ',
+    'F4 ',
+    'Ab4 ',
+    'F5 ',
+    'Ab5 ',
+    'F5 ',
+    'Ab4 ',
+    'F4 ',
+    'Ab3 '
 ]
 
+// Speed up the run over time
+for (var i = 0; i < 440; i++) {
+    let dur = Math.log10((i+7.291)/7.291)*360;
+    let note = runNotes[i%runNotes.length] + (64.0/dur)
+    run.push(note)
+}
 
 // create a new droneSeq
 var droneSeq = new Sequence( ac, tempo, drone ),
@@ -50,8 +66,9 @@ droneSeq.createCustomWave([1.0, 0.11, 0.88, 0.55, 0.77, 0.33, 0.33, 0.33, 0.44, 
 runSeq.waveType = 'triangle'
 
 // disable looping
+bassSeq.loop = false;
 droneSeq.loop = true;
-runSeq.loop = true;
+runSeq.loop = false;
 
 // play it
 droneSeq.play();

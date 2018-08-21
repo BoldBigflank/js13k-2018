@@ -8,6 +8,11 @@ X invuln frames/dash frames/stun frames
 X Rocket particles
 Health/display
 
+Conductor
+Watch the time
+Play music
+Create obstacles at specific times
+
 Obstacles
 X collision
 position/rotation functions?
