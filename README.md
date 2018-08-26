@@ -8,7 +8,10 @@ X invuln frames/dash frames/stun frames
 X Rocket particles
 Health/display
 
-Conductor
+Tears
+Go with the beat of the run
+
+Conductor(Game Loop)
 Watch the time
 Play music
 Create obstacles at specific times

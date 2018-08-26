@@ -15,7 +15,7 @@ var tempo = 64;
 
 // create some notes ('<Note Name> <Beat Length>')
 // q = quarter note, h = half note (more on that later)
-var drone = ['F4 w', 'F4 w'],
+var drone = ['F4 76'],
     run = [
     '- w' // Start with 4 beats of silence
 ],
@@ -45,18 +45,50 @@ var drone = ['F4 w', 'F4 w'],
     'Ab3 '
 ]
 
+let factories = [];
+let sprites = [];
 // Speed up the run over time
+var tearFactory = kontra.sprite({
+    tears: [],
+    type: 'factory',
+    ttl: Infinity,
+    start: function () {
+        this.tears = runSeq.notes.map(note => note.duration*60/64)
+        console.log("tearfactory start", this.tears)
+        factories.push(this)
+    },
+    update: function (dt) {
+        this.tears[0] -= dt
+        while (this.tears.length && this.tears[0] <= 0) {
+            let tear = kontra.sprite({
+                type: 'enemy',
+                width:6,
+                height:6,
+                color: '#909',
+                dx: Math.random()*12-6,
+                ddy:.2,
+                x:kontra.canvas.width/2,
+                y:kontra.canvas.height/2,
+                ttl: 49
+            })
+            sprites.push(tear)
+            let timeRemaining = this.tears.shift()
+            this.tears[0] -= timeRemaining
+        }
+    }
+})
 for (var i = 0; i < 440; i++) {
-    let dur = Math.log10((i+7.291)/7.291)*360;
-    let note = runNotes[i%runNotes.length] + (64.0/dur)
+    let dur = Math.log10((i+1+7.291)/7.291)*360; // 
+    let note = runNotes[i%runNotes.length] + (tempo/dur)
     run.push(note)
 }
-
 // create a new droneSeq
 var droneSeq = new Sequence( ac, tempo, drone ),
     runSeq = new Sequence( ac, tempo, run),
     bassSeq = new Sequence( ac, tempo, bass)
 runSeq.staccato = 0.55;
+// tearFactory.tears = runSeq.notes.map(note => note.duration*60/64)
+console.log(tearFactory.tears)
 
 droneSeq.gain.gain.value = 0.05;
 runSeq.gain.gain.value = 0.1;
@@ -67,16 +99,12 @@ runSeq.waveType = 'triangle'
 
 // disable looping
 bassSeq.loop = false;
-droneSeq.loop = true;
+droneSeq.loop = false;
 runSeq.loop = false;
 
-// play it
-droneSeq.play();
-runSeq.play();
-bassSeq.play( when + ( 60 / tempo ) * 14 )
 
 kontra.init()
-let sprites = [];
+// factories.push(tearFactory)
 
 let ship = kontra.sprite({
     x: 80,
@@ -88,6 +116,7 @@ let ship = kontra.sprite({
     dashFrames: 0,
     iFrames: 0,
     stunFrames: 0,
+    color: 'yellow',
     update() {
         if (this.stunFrames > 0) {
             this.stunFrames--;
@@ -115,7 +144,7 @@ let ship = kontra.sprite({
                         ttl: 8,
                         width:2,
                         height:2,
-                        color:'black'
+                        color:'white'
                     })
                     sprites.push(particle)
                 }
@@ -133,6 +162,8 @@ let ship = kontra.sprite({
     },
     render() {
         this.context.save();
+        this.context.strokeStyle = 'yellow';
+        this.context.fillStyle = 'yellow';
         this.context.translate(this.x, this.y);
         this.context.rotate(degreesToRadians(this.rotation));
 
@@ -144,35 +175,54 @@ let ship = kontra.sprite({
         
         this.context.closePath();
         this.context.stroke();
+        this.context.fill();
         this.context.restore();
     }
 });
 sprites.push(ship);
-kontra.keys.bind('space', function () {
-  if (this.dashFrames > 0) return;
-  if (this.stunFrames > 0) return;
-  this.dashFrames = 30
-  this.iFrames = 30
-}.bind(ship))
+
+let kitty = kontra.sprite({
+    x:kontra.canvas.width/2 - 30,
+    y:kontra.canvas.height/2 - 30,
+    type: 'enemy',
+    width:60,
+    height:60,
+    ttl: Infinity,
+    color: '#909'
+})
+sprites.push(kitty)
+
+let conductor = kontra.gameLoop({
+    // bpm -> fps
+    fps: tempo/60,
+    render: function() {},
+    clearCanvas: false,
+    update: function() {
+        if (this.beat === undefined) { this.beat = -1 }
+        this.beat++;
+        console.log("beat", this.beat);
+        if (this.beat == 0) {
+            tearFactory.start();
+            droneSeq.play();
+            runSeq.play();
+        }
+        if (this.beat == 14) {
+            bassSeq.play();
+        }
+        // console.log("beat", this.beat)
+        // at 0 beats, start the music
+
+        // at 55, start the melody
+        // at 76 beats, start the drop
+    },
+})
 
 let loop = kontra.gameLoop({  // create the main game loop
-    update: function() {        // update the game state
-        if (!this.nextTear) {
-            let tear = kontra.sprite({
-                type: 'enemy',
-                width:6,
-                height:6,
-                dx: Math.random()*12-6,
-                ddy:.2,
-                x:kontra.canvas.width/2,
-                y:kontra.canvas.height/2,
-                ttl: 49
-            })
-            sprites.push(tear)
-            this.nextTear = 15;
-        }
-        this.nextTear--;
-
+    update: function(dt) {        // update the game state
+        factories.map(factory => {
+            factory.update(dt)
+        })
+        factories = factories.filter(factory => factory.isAlive());
         sprites.map(sprite => {
             sprite.update();
             // Wrap the stage bc why not
@@ -194,4 +244,19 @@ let loop = kontra.gameLoop({  // create the main game loop
     }   
 });
 
-loop.start();    // start the game
+kontra.keys.bind('space', function () {
+    if (this.dashFrames > 0) return;
+    if (this.stunFrames > 0) return;
+    this.dashFrames = 30
+    this.iFrames = 30
+    if (loop.isStopped) {
+        startGame()
+    }
+}.bind(ship))
+
+let startGame = function() {
+    // Game
+    loop.start();
+    conductor.start();
+    // Music
+}
