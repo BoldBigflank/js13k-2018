@@ -3,7 +3,7 @@ import './js/kontra'
 import { Note, Sequence } from 'tinymusic'
 
 // set the playback tempo (120 beats per minute)
-var tempo = 128;
+var tempo = 120;
 
 function beatsToFrames(beats) {
     // beats / bpm * seconds * frames
@@ -105,7 +105,9 @@ var spinnyLine = {
     collidesWith: lineCollidesWith,
     update: function (dt) {
         this.ticks++;
-        this.rotation += ( this.ticks > beatsToFrames(36) ) ? 64/tempo : 64/tempo/2;
+        // This needs to go 135 degrees 8 beats
+        // 16.875 degrees/beat * beats/frame
+        this.rotation += ( this.ticks > beatsToFrames(36) ) ? 16.875/beatsToFrames(1) : 8.4375/beatsToFrames(1);
 
         this.height += 2.1;
         if (this.ticks > beatsToFrames(4)) this.height = 1800;
