@@ -193,6 +193,7 @@ let ship = kontra.sprite({
     dashFrames: 0,
     iFrames: 0,
     stunFrames: 0,
+    health: 7,
     color: 'yellow',
     update: function(dt) {
         if (this.stunFrames > 0) {

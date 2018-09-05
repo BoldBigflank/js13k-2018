@@ -38,5 +38,8 @@ Change tempo
 Multiplayer
 Send receive player info
 
+Optimization
+Use Object.assign() to build shapes from previous shapes
+
 
 --Alex Swan
