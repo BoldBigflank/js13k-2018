@@ -2,9 +2,10 @@ import './css/styles.css'
 import './js/kontra'
 import { Note, Sequence } from 'tinymusic'
 
-// set the playback tempo (120 beats per minute)
+// Constants
 var tempo = 120;
 
+// Utility functions
 function beatsToFrames(beats) {
     // beats / bpm * seconds * frames
     return beats / tempo * 60 * 60;
@@ -51,13 +52,9 @@ function lineCollidesWith(object) {
     return d < this.width/2 + object.radius
 }
 
-// create a new Web Audio API context
-var ac = new AudioContext(),
-    when = ac.currentTime;
+// Music
+var ac = new AudioContext()
 
-
-// create some notes ('<Note Name> <Beat Length>')
-// q = quarter note, h = half note (more on that later)
 var drone = ['F4 ' + 16*8],
     run = [
     '- 4' // Start with 4 beats of silence
@@ -87,20 +84,67 @@ var drone = ['F4 ' + 16*8],
     'Ab4 ',
     'F4 ',
     'Ab3 '
+], closeToMe = [
+    '- 1',
+    'C5 .5',
+    '- .5',
+    'Ab4 .5',
+    'Bb4 .5',
+    'Ab4 .5'
+], closeToMe2 = [
+    '- 1',
+    'C5 .5',
+    '- .5',
+    'Eb5 .5',
+    'Bb4 .5',
+    'Ab4 .5'
 ]
 
+for (var i = 0; i < 440; i++) {
+    let dur = Math.log10((i+1+7.291)/7.291)*360; // 
+    let note = runNotes[i%runNotes.length] + (tempo/dur)
+    run.push(note)
+}
+
+// create a new droneSeq
+var droneSeq = new Sequence( ac, tempo, drone ),
+    runSeq = new Sequence( ac, tempo, run),
+    bassSeq = new Sequence( ac, tempo, bass),
+    closeSeq = new Sequence( ac, tempo, closeToMe),
+    closeSeq2 = new Sequence( ac, tempo, closeToMe2)
+runSeq.staccato = 0.55;
+
+droneSeq.gain.gain.value = 0.05;
+runSeq.gain.gain.value = 0.1;
+closeSeq.gain.gain.value = 0.05;
+closeSeq2.gain.gain.value = 0.1;
+bassSeq.gain.gain.value = 0.05;
+
+droneSeq.createCustomWave([1.0, 0.11, 0.88, 0.55, 0.77, 0.33, 0.33, 0.33, 0.44, 0.11, 0.22]);
+runSeq.waveType = 'triangle'
+
+// disable looping
+bassSeq.loop = false;
+droneSeq.loop = false;
+runSeq.loop = false;
+closeSeq.loop = false;
+closeSeq2.loop = false;
+
+// Sprites
+kontra.init()
 let factories = [];
 let sprites = [];
 
+// Prototype sprites
 var spinnyLine = {
     type: 'enemy',
-    width: 35,
+    width: 20,
     height: 90,
     color: '#909',
     ttl: Infinity,
     x: 1280/2,
     y: 720/2,
-    rotation: 0,
+    rotation: -90,
     ticks: 0,
     collidesWith: lineCollidesWith,
     update: function (dt) {
@@ -117,7 +161,35 @@ var spinnyLine = {
         this.context.save();
         this.context.translate(this.x, this.y);
         this.context.rotate(degreesToRadians(this.rotation));
+        this.context.fillStyle = this.color;
         this.context.fillRect(-1*this.width/2, -this.height/2, this.width, this.height);
+        this.context.restore();
+    }
+}
+
+var floatyBall = {
+    type: 'enemy',
+    radius: 35,
+    color: '#909',
+    ttl: Infinity,
+    x: 0,
+    y: 0,
+    dy: -4,
+    rotation: 0,
+    collidesWith: circleCollidesWith,
+    update: function (dt) {
+        this.rotation += 1
+        this.advance()
+    },
+    render: function () {
+        this.context.save();
+        this.context.translate(this.x, this.y);
+        this.context.rotate(degreesToRadians(this.rotation));
+        // this.context.fillRect(-1*this.width/2, -this.height/2, this.width, this.height);
+        this.context.beginPath();
+        this.context.arc(0, 0, this.radius, 0, 2 * Math.PI, false);
+        this.context.fillStyle = this.color;
+        this.context.fill();
         this.context.restore();
     }
 }
@@ -158,33 +230,9 @@ var tearFactory = kontra.sprite({
         }
     }
 })
-for (var i = 0; i < 440; i++) {
-    let dur = Math.log10((i+1+7.291)/7.291)*360; // 
-    let note = runNotes[i%runNotes.length] + (tempo/dur)
-    run.push(note)
-}
-// create a new droneSeq
-var droneSeq = new Sequence( ac, tempo, drone ),
-    runSeq = new Sequence( ac, tempo, run),
-    bassSeq = new Sequence( ac, tempo, bass)
-runSeq.staccato = 0.55;
-
-droneSeq.gain.gain.value = 0.05;
-runSeq.gain.gain.value = 0.1;
-bassSeq.gain.gain.value = 0.05;
-
-droneSeq.createCustomWave([1.0, 0.11, 0.88, 0.55, 0.77, 0.33, 0.33, 0.33, 0.44, 0.11, 0.22]);
-runSeq.waveType = 'triangle'
-
-// disable looping
-bassSeq.loop = false;
-droneSeq.loop = false;
-runSeq.loop = false;
-
-
-kontra.init()
 
 let ship = kontra.sprite({
+    type: 'player',
     x: 80,
     y: 80,
     width: 12,
@@ -242,6 +290,9 @@ let ship = kontra.sprite({
             this.iFrames--;
         }
         this.advance()
+        // Clamp player to the window
+        this.x = Math.max(0, Math.min(this.x, kontra.canvas.width))
+        this.y = Math.max(0, Math.min(this.y, kontra.canvas.height))
     },
     render() {
         this.context.save();
@@ -265,7 +316,6 @@ let ship = kontra.sprite({
 sprites.push(ship);
 
 let kitty = kontra.sprite({
-
     x:kontra.canvas.width/2 - 60,
     y:kontra.canvas.height/2 - 60,
     type: 'enemy',
@@ -279,6 +329,7 @@ let kitty = kontra.sprite({
         this.x = (kontra.canvas.width - this.width)/2
         this.y = (kontra.canvas.height - this.height)/2
         this.advance()
+        this.color = (this.width > 128) ? '#909' : 'cyan'
     }
 })
 sprites.push(kitty)
@@ -292,14 +343,38 @@ let conductor = kontra.gameLoop({
         if (this.beat === undefined) { this.beat = -1 }
         this.beat++;
         console.log("beat " + Math.floor(1 + this.beat / 4) + '-' + Math.floor(1 + this.beat % 4)  + " (" + this.beat + ")");
+        // Music
         if (this.beat === 0) {
             tearFactory.start();
             droneSeq.play();
             runSeq.play();
             bassSeq.play();
         }
+        if (this.beat < 32 * 4) { // Intro stuff
+            if (this.beat % 8 === 0) { // Beat 0 of every other measure
+                closeSeq.play();
+            }
+        } else if (this.beat < 64 * 4) { // After the intro
+            if (this.beat % 4 === 0) { // Beat 0 of every measure
+                (Math.floor(this.beat / 4) % 4 === 3) ? closeSeq2.play() : closeSeq.play();
+            }
+        }
+        if (this.beat === 32*4) { // The Drop
+            bassSeq.stop();
+            droneSeq.stop();
+            closeSeq.gain.gain.value = 0.1 // Double the volume
+        }
+
+        // Shapes
         if (this.beat == 28 || this.beat === 36 || this.beat === 44 || this.beat === 52) {
-            sprites.push(kontra.sprite(spinnyLine))
+            sprites.unshift(kontra.sprite(spinnyLine))
+        }
+        if ( this.beat > 24 * 4 && this.beat < 32 * 4) {
+            var s = kontra.sprite(floatyBall)
+            s.x = Math.random()*kontra.canvas.width;
+            s.y = kontra.canvas.height + s.radius;
+            s.ttl = (kontra.canvas.height + 2 * s.radius) / Math.abs(s.dy)
+            sprites.unshift(s)
         }
     },
 })
@@ -312,9 +387,6 @@ let loop = kontra.gameLoop({  // create the main game loop
         factories = factories.filter(factory => factory.isAlive());
         sprites.map(sprite => {
             sprite.update(dt);
-            // Wrap the stage bc why not
-            sprite.x = (sprite.x + kontra.canvas.width) % kontra.canvas.width
-            sprite.y = (sprite.y + kontra.canvas.height) % kontra.canvas.height
             if (!ship.iFrames && sprite.type === 'enemy' && sprite.collidesWith(ship)) {
                 ship.stunFrames = 45;
                 ship.iFrames = 60;
@@ -325,9 +397,8 @@ let loop = kontra.gameLoop({  // create the main game loop
         })
         sprites = sprites.filter(sprite => sprite.isAlive());
     },
-    render: function() {        // render the game state
+    render: function() {
         sprites.map(sprite => sprite.render())
-        
     }   
 });
 
