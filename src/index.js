@@ -85,19 +85,46 @@ var drone = ['F4 ' + 16*8],
     'F4 ',
     'Ab3 '
 ], closeToMe = [
-    '- 1',
+    '- 1.75',
     'C5 .5',
-    '- .5',
+    '- .25',
     'Ab4 .5',
     'Bb4 .5',
-    'Ab4 .5'
+    'Ab4 .5',
 ], closeToMe2 = [
-    '- 1',
+    '- 1.75',
     'C5 .5',
-    '- .5',
+    '- .25',
     'Eb5 .5',
     'Bb4 .5',
     'Ab4 .5'
+], drum = [
+    'G1 0.5',
+    '- 0.5',
+    'F3 1',
+    'G1 0.5',
+    '- 0.5',
+    'F3 1',
+    'G1 0.5',
+    '- 0.5',
+    'F3 1',
+    'G1 0.5',
+    '- 0.5',
+    'F3 1',
+    'G1 0.5',
+    '- 0.5',
+    'F3 1',
+    'G1 0.5',
+    '- 0.5',
+    'F3 1',
+    'G1 0.5',
+    '- 0.5',
+    'F3 1',
+    'G1 0.5',
+    '- 0.5',
+    'F3 0.5',
+    'G1 0.25',
+    'F3 0.25'
 ]
 
 for (var i = 0; i < 440; i++) {
@@ -111,14 +138,28 @@ var droneSeq = new Sequence( ac, tempo, drone ),
     runSeq = new Sequence( ac, tempo, run),
     bassSeq = new Sequence( ac, tempo, bass),
     closeSeq = new Sequence( ac, tempo, closeToMe),
-    closeSeq2 = new Sequence( ac, tempo, closeToMe2)
+    closeSeq2 = new Sequence( ac, tempo, closeToMe2),
+    drumSeq = new Sequence( ac, tempo, drum)
 runSeq.staccato = 0.55;
+drumSeq.staccato = 0.8;
+closeSeq.staccato = 0.5;
+closeSeq2.staccato = 0.5;
+drumSeq.smoothing = 0.4;
+drumSeq.mid.gain.value = 3;
+drumSeq.bass.gain.value = 6;
+drumSeq.bass.frequency.value = 80;
+drumSeq.mid.gain.value = -6;
+drumSeq.mid.frequency.value = 500;
+drumSeq.treble.gain.value = -2;
+drumSeq.treble.frequency.value = 1400;
+
 
 droneSeq.gain.gain.value = 0.05;
 runSeq.gain.gain.value = 0.1;
 closeSeq.gain.gain.value = 0.05;
 closeSeq2.gain.gain.value = 0.1;
 bassSeq.gain.gain.value = 0.05;
+drumSeq.gain.gain.value = 0.1;
 
 droneSeq.createCustomWave([1.0, 0.11, 0.88, 0.55, 0.77, 0.33, 0.33, 0.33, 0.44, 0.11, 0.22]);
 runSeq.waveType = 'triangle'
@@ -363,6 +404,7 @@ let conductor = kontra.gameLoop({
             bassSeq.stop();
             droneSeq.stop();
             closeSeq.gain.gain.value = 0.1 // Double the volume
+            drumSeq.play();
         }
 
         // Shapes
