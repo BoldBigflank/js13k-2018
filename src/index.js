@@ -98,33 +98,37 @@ var drone = ['F4 ' + 16*8],
     'Eb5 .5',
     'Bb4 .5',
     'Ab4 .5'
-], drum = [
-    'G1 0.5',
-    '- 0.5',
-    'F3 1',
-    'G1 0.5',
-    '- 0.5',
-    'F3 1',
-    'G1 0.5',
-    '- 0.5',
-    'F3 1',
-    'G1 0.5',
-    '- 0.5',
-    'F3 1',
-    'G1 0.5',
-    '- 0.5',
-    'F3 1',
-    'G1 0.5',
-    '- 0.5',
-    'F3 1',
-    'G1 0.5',
-    '- 0.5',
-    'F3 1',
-    'G1 0.5',
-    '- 0.5',
-    'F3 0.5',
-    'G1 0.25',
-    'F3 0.25'
+], kick = [
+    'G2 0.01',
+    'C2 0.19',
+    '-  0.80',
+    'G2 0.01',
+    'C2 0.19',
+    '-  0.80',
+    'G2 0.01',
+    'C2 0.19',
+    '-  0.80',
+    'G2 0.01',
+    'C2 0.19',
+    '-  0.80',
+    'G2 0.01',
+    'C2 0.19',
+    '-  0.80',
+    'G2 0.01',
+    'C2 0.19',
+    '-  0.80',
+    'G2 0.01',
+    'C2 0.19',
+    '-  0.80',
+
+    'G2 0.01',
+    'C2 0.19',
+    '-  0.40',
+    'G2 0.01',
+    'C2 0.19',
+    '-  0.20'
+], snare = [
+    
 ]
 
 for (var i = 0; i < 440; i++) {
@@ -139,19 +143,17 @@ var droneSeq = new Sequence( ac, tempo, drone ),
     bassSeq = new Sequence( ac, tempo, bass),
     closeSeq = new Sequence( ac, tempo, closeToMe),
     closeSeq2 = new Sequence( ac, tempo, closeToMe2),
-    drumSeq = new Sequence( ac, tempo, drum)
+    kickSeq = new Sequence( ac, tempo, kick)
 runSeq.staccato = 0.55;
-drumSeq.staccato = 0.8;
 closeSeq.staccato = 0.5;
 closeSeq2.staccato = 0.5;
-drumSeq.smoothing = 0.4;
-drumSeq.mid.gain.value = 3;
-drumSeq.bass.gain.value = 6;
-drumSeq.bass.frequency.value = 80;
-drumSeq.mid.gain.value = -6;
-drumSeq.mid.frequency.value = 500;
-drumSeq.treble.gain.value = -2;
-drumSeq.treble.frequency.value = 1400;
+
+kickSeq.waveType = 'sine';
+kickSeq.smoothing = 0.8;
+kickSeq.bass.frequency.value = 60;
+kickSeq.bass.gain.value = 5;
+kickSeq.mid.frequency.value = 100;
+kickSeq.mid.gain.value = 5;
 
 
 droneSeq.gain.gain.value = 0.05;
@@ -159,7 +161,7 @@ runSeq.gain.gain.value = 0.1;
 closeSeq.gain.gain.value = 0.05;
 closeSeq2.gain.gain.value = 0.1;
 bassSeq.gain.gain.value = 0.05;
-drumSeq.gain.gain.value = 0.1;
+kickSeq.gain.gain.value = 0.5;
 
 droneSeq.createCustomWave([1.0, 0.11, 0.88, 0.55, 0.77, 0.33, 0.33, 0.33, 0.44, 0.11, 0.22]);
 runSeq.waveType = 'triangle'
@@ -276,9 +278,9 @@ let ship = kontra.sprite({
     type: 'player',
     x: 80,
     y: 80,
-    width: 12,
-    height: 12,
-    radius: 6, // we'll use this later for collision detection
+    width: 20,
+    height: 20,
+    radius: 10, // we'll use this later for collision detection
     rotation: 0,
     ttl: Infinity,
     dashFrames: 0,
@@ -292,10 +294,10 @@ let ship = kontra.sprite({
             this.rotation += 4;
         } else {
             this.dx = this.dy = 0;
-            if (kontra.keys.pressed('w')) { this.dy += -3; }
-            if (kontra.keys.pressed('s')) { this.dy += 3; }
-            if (kontra.keys.pressed('a')) { this.dx += -3; }
-            if (kontra.keys.pressed('d')) { this.dx += 3; }
+            if (kontra.keys.pressed('w')) { this.dy += -4; }
+            if (kontra.keys.pressed('s')) { this.dy += 4; }
+            if (kontra.keys.pressed('a')) { this.dx += -4; }
+            if (kontra.keys.pressed('d')) { this.dx += 4; }
             if (this.dx && this.dy) {
                 this.dx *= 0.707;
                 this.dy *= 0.707;
@@ -304,17 +306,19 @@ let ship = kontra.sprite({
                 this.rotation = Math.atan2(this.dy, this.dx) * 180 / Math.PI;
                 // Shoot particles out the back
                 for (let i = 0; i < (this.dashFrames/10)+1; i++) {
+                    if (Math.random()*2 > 1) continue; // Half the particles, easy way
                     let particle = kontra.sprite({
                         type:'particle',
-                        x: this.x,
-                        y: this.y,
-                        dx: this.dx * -1 + Math.random()*4-2,
-                        dy: this.dy * -1 + Math.random()*4-2,
-                        ttl: 8,
-                        width:2,
-                        height:2,
-                        color:'white',
+                        x: this.x-4 + Math.random()*this.width - this.width/2,
+                        y: this.y-4 + Math.random()*this.height - this.height/2,
+                        dx: this.dx * -2 * (Math.random()+0.5),
+                        dy: this.dy * -2 * (Math.random()+0.5), 
+                        ttl: 16,
+                        width:8,
+                        height:8,
+                        color:'yellow',
                         update: function (dt) {
+                            this.color = '#' + (this.ttl*15).toString(16) + (this.ttl*15).toString(16) + '00'
                             this.advance()
                         }
                     })
@@ -330,12 +334,24 @@ let ship = kontra.sprite({
         if (this.iFrames > 0) {
             this.iFrames--;
         }
+        // Start and stop moving effects
+        this.width = damp(this.width, 20, 10, dt)
+        this.height = damp(this.height, 20, 10, dt)
+        if (!this.moving && (this.dx || this.dy)) { // Started moving
+            this.width += 10;
+            this.height -= 10;
+            this.moving = true;
+        } else if (this.moving && this.dx == 0 && this.dy == 0) {
+            this.width -= 12;
+            this.height += 12;
+            this.moving = false;
+        }
         this.advance()
         // Clamp player to the window
         this.x = Math.max(0, Math.min(this.x, kontra.canvas.width))
         this.y = Math.max(0, Math.min(this.y, kontra.canvas.height))
     },
-    render() {
+    render: function() {
         this.context.save();
         this.context.strokeStyle = 'yellow';
         this.context.fillStyle = 'yellow';
@@ -344,9 +360,9 @@ let ship = kontra.sprite({
 
         this.context.beginPath();
         // draw a triangle
-        this.context.moveTo(-6, -6);
-        this.context.lineTo(12, 0);
-        this.context.lineTo(-6, 6);
+        this.context.moveTo(-this.width/2, -this.height/2);
+        this.context.lineTo(this.width, 0); // nose
+        this.context.lineTo(-this.width/2, this.height/2);
         
         this.context.closePath();
         this.context.stroke();
@@ -404,7 +420,7 @@ let conductor = kontra.gameLoop({
             bassSeq.stop();
             droneSeq.stop();
             closeSeq.gain.gain.value = 0.1 // Double the volume
-            drumSeq.play();
+            kickSeq.play();
         }
 
         // Shapes
@@ -445,13 +461,14 @@ let loop = kontra.gameLoop({  // create the main game loop
 });
 
 kontra.keys.bind('space', function () {
-    if (this.dashFrames > 0) return;
-    if (this.stunFrames > 0) return;
-    this.dashFrames = 30
-    this.iFrames = 30
     if (loop.isStopped) {
         startGame()
     }
+    if (this.dashFrames > 0) return;
+    if (this.stunFrames > 0) return;
+    if (!(this.dx || this.dy)) return;
+    this.dashFrames = 30
+    this.iFrames = 30
 }.bind(ship))
 
 let startGame = function() {
