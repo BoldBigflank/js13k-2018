@@ -246,6 +246,9 @@ var tearFactory = kontra.sprite({
         this.tears = runSeq.notes.map(note => note.duration*60/tempo)
         factories.push(this)
     },
+    stop: function () {
+        this.tears = []
+    },
     update: function (dt) {
         this.tears[0] -= dt
         while (this.tears.length && this.tears[0] <= 0) {
@@ -335,8 +338,8 @@ let ship = kontra.sprite({
             this.iFrames--;
         }
         // Start and stop moving effects
-        this.width = damp(this.width, 20, 10, dt)
-        this.height = damp(this.height, 20, 10, dt)
+        this.width = damp(this.width, 40, 10, dt)
+        this.height = damp(this.height, 30, 10, dt)
         if (!this.moving && (this.dx || this.dy)) { // Started moving
             this.width += 10;
             this.height -= 10;
@@ -389,8 +392,6 @@ let ship = kontra.sprite({
         x.lineTo(0, this.height);
         x.closePath();
         x.stroke();
-        
-
         
         this.context.save();
         this.context.translate(this.x, this.y);
@@ -477,12 +478,16 @@ let loop = kontra.gameLoop({  // create the main game loop
         sprites.map(sprite => {
             sprite.update(dt);
             if (!ship.iFrames && sprite.type === 'enemy' && sprite.collidesWith(ship)) {
-                ship.stunFrames = 45;
                 ship.health--;
-                ship.iFrames = 60;
-                let angle = Math.random()*2*Math.PI;
-                ship.dx = Math.cos(angle)*8;
-                ship.dy = Math.sin(angle)*8;
+                if (ship.health > 0) {
+                    ship.stunFrames = 45;
+                    ship.iFrames = 60;
+                    let angle = Math.random()*2*Math.PI;
+                    ship.dx = Math.cos(angle)*8;
+                    ship.dy = Math.sin(angle)*8;
+                } else {
+                    gameOver()
+                }
             }
         })
         sprites = sprites.filter(sprite => sprite.isAlive());
@@ -492,9 +497,47 @@ let loop = kontra.gameLoop({  // create the main game loop
     }   
 });
 
+let gameOverScreen = kontra.sprite({
+    render: function () {
+        kontra.context.strokeStyle = "#fff"
+        kontra.context.fillStyle = "#fff"
+        kontra.context.font = "48px Verdana"
+        kontra.context.textAlign = 'right'
+        kontra.context.fillText("CLOSE TO ME", kontra.canvas.width-10, kontra.canvas.height * 0.75)
+        kontra.context.fillStyle = "#0aa"
+        kontra.context.font = "24px Verdana"
+        kontra.context.fillText("by", kontra.canvas.width-10, kontra.canvas.height*0.75+30)
+        kontra.context.fillText("Sabrepulse", kontra.canvas.width-10, kontra.canvas.height*0.75+60)
+
+        kontra.context.strokeStyle = "#fff"
+        kontra.context.fillStyle = "#fff"
+        kontra.context.font = "48px Verdana"
+        kontra.context.textAlign = 'left'
+        kontra.context.fillText("CONTROLS", 10, kontra.canvas.height * 0.75)
+        kontra.context.fillStyle = "#0aa"
+        kontra.context.font = "24px Verdana"
+        kontra.context.fillText("WASD to move", 10, kontra.canvas.height*0.75+30)
+        kontra.context.fillText("Space to dash", 10, kontra.canvas.height*0.75+60)
+        kontra.context.fillText("Space to dash", 10, kontra.canvas.height*0.75+60)
+        kontra.context.textAlign = 'center'
+        kontra.context.fillText("Space to start", kontra.canvas.width/2, kontra.canvas.height - 24)
+        
+    }
+})
+let menuLoop = kontra.gameLoop({
+    update: function(dt) {
+    },
+    render: function() {
+        gameOverScreen.render()
+    }
+})
+menuLoop.start()
+
+
 kontra.keys.bind('space', function () {
     if (loop.isStopped) {
         startGame()
+        return
     }
     if (this.dashFrames > 0) return;
     if (this.stunFrames > 0) return;
@@ -503,10 +546,47 @@ kontra.keys.bind('space', function () {
     this.iFrames = 30
 }.bind(ship))
 
+kontra.keys.bind('r', function () {
+    console.log("restarting")
+    startGame()
+})
+
 let startGame = function() {
+    // Kill sprites
+    sprites.forEach(sprite => {if (!sprite.type === 'player') sprite.ttl = 0})
+    ship.health = 7;
+    ship.x = 100;
+    ship.y = kontra.canvas.height/2;
+    factories.forEach(factory => factory.stop())
+    factories = []
+
+    // Stop music
+    droneSeq.stop()
+    runSeq.stop()
+    bassSeq.stop()
+    closeSeq.stop()
+    closeSeq2.stop()
+    kickSeq.stop()
+    
     // Game
-    loop.start();
+
+    menuLoop.stop()
+    if (loop.isStopped) loop.start();
     conductor.beat = -1;
-    conductor.start();
+    if (conductor.isStopped) conductor.start();
     // Music
+}
+
+let gameOver = function() {
+    // Stop music
+    droneSeq.stop()
+    runSeq.stop()
+    bassSeq.stop()
+    closeSeq.stop()
+    closeSeq2.stop()
+    kickSeq.stop()
+    
+    loop.stop()
+    conductor.stop()
+    if (menuLoop.isStopped) menuLoop.start()
 }

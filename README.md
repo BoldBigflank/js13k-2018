@@ -6,15 +6,18 @@ X moves diagonally
 X rotates to face direction
 X invuln frames/dash frames/stun frames
 X Rocket particles
-Health/display
+X Health/display
+Win state
+Lose state
+Reset everything/restart
 
-Tears
-Go with the beat of the run
+X Tears
+Adjust tears to better match music
 
 Conductor(Game Loop)
-Watch the time
-Play music
-Create obstacles at specific times
+X Watch the time
+X Play music
+X Create obstacles at specific times
 
 Obstacles
 X collision
@@ -28,7 +31,6 @@ Blue square
 X tears
 rotating/bursting lines
 fireworks
-
 
 Sounds
 Different sounds
