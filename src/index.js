@@ -278,8 +278,8 @@ let ship = kontra.sprite({
     type: 'player',
     x: 80,
     y: 80,
-    width: 20,
-    height: 20,
+    width: 40,
+    height: 30,
     radius: 10, // we'll use this later for collision detection
     rotation: 0,
     ttl: Infinity,
@@ -352,21 +352,52 @@ let ship = kontra.sprite({
         this.y = Math.max(0, Math.min(this.y, kontra.canvas.height))
     },
     render: function() {
+        let c = this.canvas || document.createElement('canvas');
+        c.width = this.width;
+        c.height = this.height;
+        let x = c.getContext('2d')
+        // draw a triangle
+        x.strokeStyle = 'yellow';
+        x.fillStyle = 'yellow';
+        x.globalCompositeOperation = 'source-over'
+        x.beginPath();
+        // x.moveTo(-this.width/2, -this.height/2);
+        x.moveTo(0, 0);
+        x.lineTo(this.width, this.height/2); // nose
+        x.lineTo(0, this.height);
+        x.closePath();
+        x.stroke();
+        x.fill();
+        // Block out the missing health
+        x.globalCompositeOperation = 'source-atop'
+        x.strokeStyle = '#111';
+        x.beginPath();
+        let sAngle = 0 - 0.5 * Math.PI;
+        let eAngle = 2 * Math.PI * (7 - this.health) / 7 - 0.5 * Math.PI;
+        x.lineWidth = 2 * this.width;
+        x.arc(this.width/2, this.height/2, this.width, sAngle, eAngle)
+        x.stroke();
+
+        // Outline
+        x.globalCompositeOperation = 'source-over'
+        x.lineWidth = 2;
+        x.strokeStyle = 'yellow';
+        x.beginPath();
+        // x.moveTo(-this.width/2, -this.height/2);
+        x.moveTo(0, 0);
+        x.lineTo(this.width, this.height/2); // nose
+        x.lineTo(0, this.height);
+        x.closePath();
+        x.stroke();
+        
+
+        
         this.context.save();
-        this.context.strokeStyle = 'yellow';
-        this.context.fillStyle = 'yellow';
         this.context.translate(this.x, this.y);
         this.context.rotate(degreesToRadians(this.rotation));
 
-        this.context.beginPath();
-        // draw a triangle
-        this.context.moveTo(-this.width/2, -this.height/2);
-        this.context.lineTo(this.width, 0); // nose
-        this.context.lineTo(-this.width/2, this.height/2);
-        
-        this.context.closePath();
-        this.context.stroke();
-        this.context.fill();
+        this.context.drawImage(c, -this.width/2, -this.height/2)
+
         this.context.restore();
     }
 });
@@ -447,6 +478,7 @@ let loop = kontra.gameLoop({  // create the main game loop
             sprite.update(dt);
             if (!ship.iFrames && sprite.type === 'enemy' && sprite.collidesWith(ship)) {
                 ship.stunFrames = 45;
+                ship.health--;
                 ship.iFrames = 60;
                 let angle = Math.random()*2*Math.PI;
                 ship.dx = Math.cos(angle)*8;
