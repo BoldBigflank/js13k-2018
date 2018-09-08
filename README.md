@@ -7,9 +7,9 @@ X rotates to face direction
 X invuln frames/dash frames/stun frames
 X Rocket particles
 X Health/display
-Win state
-Lose state
-Reset everything/restart
+X Win state
+X Lose state
+X Reset everything/restart
 
 X Tears
 Adjust tears to better match music

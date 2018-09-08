@@ -174,7 +174,7 @@ closeSeq.loop = false;
 closeSeq2.loop = false;
 
 // Sprites
-kontra.init()
+kontra.init('game')
 let factories = [];
 let sprites = [];
 
@@ -201,12 +201,12 @@ var spinnyLine = {
         this.advance()
     },
     render: function () {
-        this.context.save();
-        this.context.translate(this.x, this.y);
-        this.context.rotate(degreesToRadians(this.rotation));
-        this.context.fillStyle = this.color;
-        this.context.fillRect(-1*this.width/2, -this.height/2, this.width, this.height);
-        this.context.restore();
+        kontra.context.save();
+        kontra.context.translate(this.x, this.y);
+        kontra.context.rotate(degreesToRadians(this.rotation));
+        kontra.context.fillStyle = this.color;
+        kontra.context.fillRect(-1*this.width/2, -this.height/2, this.width, this.height);
+        kontra.context.restore();
     }
 }
 
@@ -225,15 +225,15 @@ var floatyBall = {
         this.advance()
     },
     render: function () {
-        this.context.save();
-        this.context.translate(this.x, this.y);
-        this.context.rotate(degreesToRadians(this.rotation));
+        kontra.context.save();
+        kontra.context.translate(this.x, this.y);
+        kontra.context.rotate(degreesToRadians(this.rotation));
         // this.context.fillRect(-1*this.width/2, -this.height/2, this.width, this.height);
-        this.context.beginPath();
-        this.context.arc(0, 0, this.radius, 0, 2 * Math.PI, false);
-        this.context.fillStyle = this.color;
-        this.context.fill();
-        this.context.restore();
+        kontra.context.beginPath();
+        kontra.context.arc(0, 0, this.radius, 0, 2 * Math.PI, false);
+        kontra.context.fillStyle = this.color;
+        kontra.context.fill();
+        kontra.context.restore();
     }
 }
 
@@ -321,8 +321,14 @@ let ship = kontra.sprite({
                         height:8,
                         color:'yellow',
                         update: function (dt) {
-                            this.color = '#' + (this.ttl*15).toString(16) + (this.ttl*15).toString(16) + '00'
+                            // this.color = '#' + (this.ttl*15).toString(16) + (this.ttl*15).toString(16) + '00'
                             this.advance()
+                        }, render: function () {
+                            kontra.context.save()
+                            kontra.context.globalAlpha = this.ttl / 16
+                            kontra.context.fillStyle = '#ff0'
+                            kontra.context.fillRect(this.x, this.y, this.width, this.height)
+                            kontra.context.restore()
                         }
                     })
                     sprites.push(particle)
@@ -393,13 +399,13 @@ let ship = kontra.sprite({
         x.closePath();
         x.stroke();
         
-        this.context.save();
-        this.context.translate(this.x, this.y);
-        this.context.rotate(degreesToRadians(this.rotation));
+        kontra.context.save();
+        kontra.context.translate(this.x, this.y);
+        kontra.context.rotate(degreesToRadians(this.rotation));
 
-        this.context.drawImage(c, -this.width/2, -this.height/2)
+        kontra.context.drawImage(c, -this.width/2, -this.height/2)
 
-        this.context.restore();
+        kontra.context.restore();
     }
 });
 sprites.push(ship);
@@ -431,6 +437,10 @@ let conductor = kontra.gameLoop({
     update: function(dt) {
         if (this.beat === undefined) { this.beat = -1 }
         this.beat++;
+        if (this.beat === 36*4) {
+            winGame()
+            return
+        }
         console.log("beat " + Math.floor(1 + this.beat / 4) + '-' + Math.floor(1 + this.beat % 4)  + " (" + this.beat + ")");
         // Music
         if (this.beat === 0) {
@@ -497,28 +507,28 @@ let loop = kontra.gameLoop({  // create the main game loop
     }   
 });
 
-let gameOverScreen = kontra.sprite({
+let titleText = kontra.sprite({
     render: function () {
         kontra.context.strokeStyle = "#fff"
         kontra.context.fillStyle = "#fff"
-        kontra.context.font = "48px Verdana"
+        kontra.context.font = "bold 48px Verdana"
         kontra.context.textAlign = 'right'
-        kontra.context.fillText("CLOSE TO ME", kontra.canvas.width-10, kontra.canvas.height * 0.75)
+        kontra.context.fillText("CLOSE TO ME", kontra.canvas.width-20, kontra.canvas.height * 0.75)
         kontra.context.fillStyle = "#0aa"
         kontra.context.font = "24px Verdana"
-        kontra.context.fillText("by", kontra.canvas.width-10, kontra.canvas.height*0.75+30)
-        kontra.context.fillText("Sabrepulse", kontra.canvas.width-10, kontra.canvas.height*0.75+60)
+        kontra.context.fillText("by", kontra.canvas.width-20, kontra.canvas.height*0.75+30)
+        kontra.context.fillText("Sabrepulse", kontra.canvas.width-20, kontra.canvas.height*0.75+60)
 
         kontra.context.strokeStyle = "#fff"
         kontra.context.fillStyle = "#fff"
-        kontra.context.font = "48px Verdana"
+        kontra.context.font = "bold 48px Verdana"
         kontra.context.textAlign = 'left'
-        kontra.context.fillText("CONTROLS", 10, kontra.canvas.height * 0.75)
+        kontra.context.fillText("CONTROLS", 20, kontra.canvas.height * 0.75)
         kontra.context.fillStyle = "#0aa"
         kontra.context.font = "24px Verdana"
-        kontra.context.fillText("WASD to move", 10, kontra.canvas.height*0.75+30)
-        kontra.context.fillText("Space to dash", 10, kontra.canvas.height*0.75+60)
-        kontra.context.fillText("Space to dash", 10, kontra.canvas.height*0.75+60)
+        kontra.context.fillText("WASD to move", 20, kontra.canvas.height*0.75+30)
+        kontra.context.fillText("Space to dash", 20, kontra.canvas.height*0.75+60)
+        kontra.context.fillText("Space to dash", 20, kontra.canvas.height*0.75+60)
         kontra.context.textAlign = 'center'
         kontra.context.fillText("Space to start", kontra.canvas.width/2, kontra.canvas.height - 24)
         
@@ -526,16 +536,78 @@ let gameOverScreen = kontra.sprite({
 })
 let menuLoop = kontra.gameLoop({
     update: function(dt) {
+        // ship.update(dt)
+        // sprites.map(sprite => sprite.update())
     },
     render: function() {
-        gameOverScreen.render()
+        // sprites.map(sprite => sprite.render())
+        titleText.render()
+        // ship.render()
     }
 })
 menuLoop.start()
 
+let winSprite = {
+    width:10,
+    height:10,
+    color:'white',
+
+    update: function(dt) {
+        this.width = damp(this.width, 42, this.damping, dt)
+        this.height = damp(this.height, 42, this.damping, dt)
+        this.advance()
+    },
+    render: function () {
+        kontra.context.save()
+        kontra.context.fillStyle = "#fff"
+        kontra.context.translate(this.x+21, this.y+21)
+        kontra.context.fillRect(-this.width/2, -this.height/2, this.width, this.height)
+        kontra.context.restore()
+    }
+}
+
+let winText = kontra.sprite({
+    rank: 'E',
+    render: function () {
+        kontra.context.fillStyle = "#888"
+        kontra.context.font = "bold 48px Verdana"
+        kontra.context.textAlign = 'center'
+        kontra.context.fillText("Rank: " + this.rank, kontra.canvas.width/2, kontra.canvas.height/2)
+        kontra.context.font = "24px Verdana"
+        kontra.context.fillText("R to restart", kontra.canvas.width/2, kontra.canvas.height/2+48)
+        
+    }
+})
+
+let winSprites = []
+const MAXMAG = Math.sqrt(Math.pow(kontra.canvas.width,2)+Math.pow(kontra.canvas.height,2))/2
+let winLoop = kontra.gameLoop({
+    update: function (dt) {
+        if (!this.winSprites){
+            this.winSprites = []
+            for (let y = 0; y < kontra.canvas.height; y+=40) {
+                for (let x = 0; x < kontra.canvas.width; x+=40) {
+                    console.log("sprite")
+                    let s = kontra.sprite(winSprite)
+                    s.x = x;
+                    s.y = y;
+                    s.damping = 0.7 + Math.sqrt(Math.pow(x - kontra.canvas.width/2,2)+Math.pow(y - kontra.canvas.height/2,2)) / MAXMAG
+                    this.winSprites.push(s)
+                }
+            }
+            
+        }
+        this.winSprites.map(s => s.update(dt))
+    },
+    render: function (dt) {
+        if (this.winSprites) this.winSprites.map(s => s.render())
+        winText.render()
+    }
+})
+// winLoop.start()
 
 kontra.keys.bind('space', function () {
-    if (loop.isStopped) {
+    if (!menuLoop.isStopped) {
         startGame()
         return
     }
@@ -577,7 +649,7 @@ let startGame = function() {
     // Music
 }
 
-let gameOver = function() {
+let stopAll = function() {
     // Stop music
     droneSeq.stop()
     runSeq.stop()
@@ -588,5 +660,17 @@ let gameOver = function() {
     
     loop.stop()
     conductor.stop()
+    winLoop.stop()
+    menuLoop.stop()
+}
+
+let winGame = function () {
+    stopAll()
+    winText.rank = ['S','A','B','C','D','D','E'][(7 - ship.health)]
+    if (winLoop.isStopped) winLoop.start()
+}
+
+let gameOver = function() {
+    stopAll()
     if (menuLoop.isStopped) menuLoop.start()
 }
