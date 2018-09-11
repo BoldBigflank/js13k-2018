@@ -23,6 +23,14 @@ function damp (a, b, lambda, dt) {
     return lerp(a, b, 1 - Math.exp(-lambda * dt))
 }
 
+function circleRender(sprite) {
+    kontra.context.strokeStyle = this.color;
+    kontra.context.beginPath()
+    kontra.context.lineWidth = this.radius
+    kontra.context.arc(this.x, this.y,this.radius/2, 0, Math.PI*2)
+    kontra.context.stroke()
+}
+
 function circleCollidesWith(object) {
     // assumes object is a circle
     let r = this.radius || this.height/2;
@@ -411,23 +419,121 @@ let ship = kontra.sprite({
 sprites.push(ship);
 
 let kitty = kontra.sprite({
-    x:kontra.canvas.width/2 - 60,
-    y:kontra.canvas.height/2 - 60,
+    x:kontra.canvas.width/2,
+    y:kontra.canvas.height/2,
     type: 'enemy',
     width:120,
     height:120,
     ttl: Infinity,
     color: '#909',
+    face: '',
     update: function (dt) {
-        this.width = damp(this.width, 120, 12, dt)
-        this.height = damp(this.height, 120, 12, dt)
-        this.x = (kontra.canvas.width - this.width)/2
-        this.y = (kontra.canvas.height - this.height)/2
+        if (!this.face) {
+            this.width = damp(this.width, 120, 12, dt)
+            this.height = damp(this.height, 120, 12, dt)
+        } else {
+            this.width = this.height = 200
+        }
+        // this.x = (kontra.canvas.width - this.width)/2
+        // this.y = (kontra.canvas.height - this.height)/2
         this.advance()
         this.color = (this.width > 128) ? '#909' : 'cyan'
+    },
+    render: function (dt) {
+        kontra.context.fillStyle = this.color
+        kontra.context.fillRect(this.x - this.width/2, this.y - this.height/2, this.width, this.height)
+        if (this.face == 'grab') {
+            kontra.context.fillStyle = '#000'
+            kontra.context.fillText("GRAB", this.x, this.y)
+        } else { // DEBUG show the face
+            kontra.context.fillStyle = '#000'
+            kontra.context.fillText(this.face, this.x , this.y)
+        }
     }
 })
 sprites.push(kitty)
+
+let hand = {
+    type: 'enemy',
+    color: '#909',
+    x: kontra.canvas.width/2,
+    y: kontra.canvas.height/2,
+    collidesWith: circleCollidesWith,
+    radius: 92,
+    ttl: beatsToFrames(10),
+    ticks: 0,
+    direction: 1,
+    width: 128,
+    height: 128,
+    update: function (dt) {
+        this.ticks++;
+        this.dx = 0;
+        this.dy = 0;
+        this.ddy = 0;
+        if (this.ticks < beatsToFrames(2)) { // Move sideways
+            this.dx = kontra.canvas.width * 0.20 * this.direction / beatsToFrames(2);
+        } else if (this.ticks < beatsToFrames(4)) { // Hold/open
+            this.width = 192
+        } else if (this.ticks < beatsToFrames(5)) { // Drop down
+            this.dy = (kontra.canvas.height * 0.5 - 64) / beatsToFrames(1)
+        } else if (this.ticks < beatsToFrames(10)) { // Rise up
+            this.dy = -(kontra.canvas.height - 2 * this.radius) / beatsToFrames(5)
+        }
+        this.advance()
+    },
+    render: circleRender
+}
+
+let gear = {
+    type: 'enemy',
+    color: '#909',
+    x: 46,
+    y: -46,
+    collidesWith: circleCollidesWith,
+    radius: 64,
+    ttl: beatsToFrames(10),
+    ticks: 0,
+    direction: 1,
+    width: 128,
+    height: 128,
+    update: function (dt) {
+        this.ticks++;
+        this.ddy = 0;
+        if (this.ticks < beatsToFrames(2)) { // Move down
+            this.dy = this.radius / beatsToFrames(2)
+        } else if (this.ticks < beatsToFrames(6)) { // Hold
+            this.dy = 0
+        } else { // Drop down
+            this.ddy = 1
+        }
+        this.advance()
+    },
+    render: circleRender
+}
+
+let bottom = {
+    type: 'enemy',
+    color: '#909',
+    width: kontra.canvas.width,
+    height: kontra.canvas.height,
+    x:0,
+    y:kontra.canvas.height,
+    ticks: 0,
+    ttl: beatsToFrames(12),
+    update: function (dt) {
+        this.ticks++
+        // this.dy = 0
+        if (this.ticks < beatsToFrames(5)) {
+            this.dy = -1 * (kontra.canvas.height - 92*2) / beatsToFrames(5)
+        } else {
+            this.ddy = 2
+        }
+        this.advance()
+    }
+}
+
+var grabBeat = 31*4; // straddle the drop
+var cogBeat = 35 * 4;
 
 let conductor = kontra.gameLoop({
     // bpm -> fps
@@ -467,7 +573,9 @@ let conductor = kontra.gameLoop({
 
         // Shapes
         if (this.beat == 28 || this.beat === 36 || this.beat === 44 || this.beat === 52) {
-            sprites.unshift(kontra.sprite(spinnyLine))
+            let s = kontra.sprite(spinnyLine)
+            s.ttl = beatsToFrames (31 * 4 - this.beat)
+            sprites.unshift(s)
         }
         if ( this.beat > 24 * 4 && this.beat < 32 * 4) {
             var s = kontra.sprite(floatyBall)
@@ -476,6 +584,68 @@ let conductor = kontra.gameLoop({
             s.ttl = (kontra.canvas.height + 2 * s.radius) / Math.abs(s.dy)
             sprites.unshift(s)
         }
+
+        // Grab
+        if (this.beat == grabBeat - 4 || this.beat == cogBeat - 4) {
+            // 4 spinnylines warning 2 beats, ttl 4 beats
+            for (let i = 0; i < 4; i++) {
+                let s = kontra.sprite(spinnyLine)
+                s.rotation = 45 * i
+                s.ttl = beatsToFrames (8)
+                sprites.unshift(s)
+                
+            }
+        }
+        if (this.beat == grabBeat + 1) { // beat 2
+            // Show face
+            kitty.face = 'grab'
+        }
+        if (this.beat == grabBeat + 2) { // beat 3
+            // Left and right hands
+            let l = kontra.sprite(hand)
+            l.direction = -1
+            sprites.push(l)
+            let r = kontra.sprite(hand)
+            sprites.push(r)
+        }
+        if (this.beat == grabBeat + 6) {
+            // Drop kitty from half
+            kitty.dy = (kontra.canvas.height * 0.5 - kitty.height/2) / beatsToFrames(1)
+        }
+        if (this.beat == grabBeat + 7) {
+            // gears
+            let gear1 = kontra.sprite(gear)
+            gear1.x = gear.radius
+            let gear2 = kontra.sprite(gear)
+            gear2.x = 3 * gear2.radius
+            let gear3 = kontra.sprite(gear)
+            gear3.x = kontra.canvas.width - gear3.radius
+            let gear4 = kontra.sprite(gear)
+            gear4.x = kontra.canvas.width - 3 * gear4.radius
+            sprites.push(gear1, gear2, gear3, gear4)
+            // kitty climb to top
+            kitty.dy = -1 * (kontra.canvas.height - kitty.height) / beatsToFrames(4)
+            let b = kontra.sprite(bottom)
+            sprites.unshift(b)
+        }
+        if (this.beat == grabBeat + 11) {
+            // kitty hold at top
+            kitty.dy = 0
+        }
+        if (this.beat == grabBeat + 12) {
+            // kitty fall to bottom
+            kitty.dy = ((kontra.canvas.height - kitty.height) / beatsToFrames(2))
+        }
+        if (this.beat == grabBeat + 14) {
+            // kitty go back to center
+            kitty.dy = -1 * (kontra.canvas.height/2 - kitty.height/2) / beatsToFrames(2)
+        }
+        if (this.beat == grabBeat + 16) {
+            // kitty reset
+            kitty.dy = 0
+            kitty.face = 'spaz';
+        }
+
     },
 })
 
