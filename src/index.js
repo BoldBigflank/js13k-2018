@@ -26,19 +26,23 @@ function damp (a, b, lambda, dt) {
 function circleRender(sprite) {
     kontra.context.strokeStyle = this.color;
     kontra.context.beginPath()
-    kontra.context.lineWidth = this.radius
-    kontra.context.arc(this.x, this.y,this.radius/2, 0, Math.PI*2)
+    kontra.context.lineWidth = this.width
+    kontra.context.arc(this.x, this.y, this.radius - this.width/2, 0, Math.PI*2)
     kontra.context.stroke()
 }
 
 function circleCollidesWith(object) {
+    // radius: 17,
+    // width: 34,
     // assumes object is a circle
-    let r = this.radius || this.height/2;
+    let outerRadius = this.radius || this.height/2;
+    let innerRadius = this.radius - this.width || 0;
     let dx = this.x - object.x;
     let dy = this.y - object.y;
     let distance = Math.sqrt(dx * dx + dy * dy);
 
-    return distance < r + object.radius;
+    return distance < outerRadius + object.radius &&
+           distance > innerRadius - object.radius
 }
 
 function lineCollidesWith(object) {
@@ -220,7 +224,8 @@ var spinnyLine = {
 
 var floatyBall = {
     type: 'enemy',
-    radius: 35,
+    radius: 34,
+    width: 34,
     color: '#909',
     ttl: Infinity,
     x: 0,
@@ -230,6 +235,27 @@ var floatyBall = {
     collidesWith: circleCollidesWith,
     update: function (dt) {
         this.rotation += 1
+        this.advance()
+    },
+    render: circleRender
+}
+
+var explodeyBall = {
+    type: 'enemy',
+    radius: 0,
+    maxRadius: 360,
+    color: '#909',
+    ttl: Infinity,
+    x: 0,
+    y: 0,
+    dy: 0,
+    direction: 1,
+    rotation: 0,
+    collidesWith: circleCollidesWith,
+    update: function (dt) {
+        this.radius += this.direction * this.maxRadius / beatsToFrames(0.5)
+        if (this.radius > this.maxRadius) this.direction = -1
+        if (this.radius < 0) this.ttl = 0
         this.advance()
     },
     render: function () {
@@ -463,8 +489,7 @@ let hand = {
     ttl: beatsToFrames(10),
     ticks: 0,
     direction: 1,
-    width: 128,
-    height: 128,
+    width: 92,
     update: function (dt) {
         this.ticks++;
         this.dx = 0;
@@ -473,7 +498,8 @@ let hand = {
         if (this.ticks < beatsToFrames(2)) { // Move sideways
             this.dx = kontra.canvas.width * 0.20 * this.direction / beatsToFrames(2);
         } else if (this.ticks < beatsToFrames(4)) { // Hold/open
-            this.width = 192
+            // this.radius = 128
+            // this.width = 128
         } else if (this.ticks < beatsToFrames(5)) { // Drop down
             this.dy = (kontra.canvas.height * 0.5 - 64) / beatsToFrames(1)
         } else if (this.ticks < beatsToFrames(10)) { // Rise up
@@ -491,11 +517,10 @@ let gear = {
     y: -46,
     collidesWith: circleCollidesWith,
     radius: 64,
+    width:64,
     ttl: beatsToFrames(10),
     ticks: 0,
     direction: 1,
-    width: 128,
-    height: 128,
     update: function (dt) {
         this.ticks++;
         this.ddy = 0;
@@ -543,7 +568,7 @@ let conductor = kontra.gameLoop({
     update: function(dt) {
         if (this.beat === undefined) { this.beat = -1 }
         this.beat++;
-        if (this.beat === 36*4) {
+        if (this.beat === 40*4) {
             winGame()
             return
         }
@@ -604,9 +629,8 @@ let conductor = kontra.gameLoop({
             // Left and right hands
             let l = kontra.sprite(hand)
             l.direction = -1
-            sprites.push(l)
             let r = kontra.sprite(hand)
-            sprites.push(r)
+            sprites.push(l, r)
         }
         if (this.beat == grabBeat + 6) {
             // Drop kitty from half
@@ -645,6 +669,86 @@ let conductor = kontra.gameLoop({
             kitty.dy = 0
             kitty.face = 'spaz';
         }
+
+        // Cog
+        if (this.beat == cogBeat + 2) { // beat 3
+            // Show face
+            kitty.face = 'cog'
+        }
+        if (this.beat == cogBeat + 4) { // beat 3
+            // move to the right
+            kitty.dx = kontra.canvas.width*0.5/beatsToFrames(2)
+        }
+        if (this.beat == cogBeat + 6) {
+            kitty.dx = 0
+            // explosion, cog
+            let s = kontra.sprite(explodeyBall)
+            s.x = kontra.canvas.width
+            s.y = kontra.canvas.height/2
+            sprites.push(s)
+            kitty.x = -1 * kitty.width
+        }
+        if (this.beat == cogBeat + 7) {
+            kitty.dx = 0
+            // cog
+            let s = kontra.sprite(floatyBall)
+            s.dy = 0;
+            s.dx = -1 * kontra.canvas.width / beatsToFrames(6)
+            s.radius = kontra.canvas.height/2
+            s.width = 128
+            s.x = kontra.canvas.width
+            s.y = kontra.canvas.height/2
+            s.ttl = beatsToFrames(6)
+            sprites.push(s)
+        }
+        if (this.beat == cogBeat + 13) {
+            kitty.dx = (kontra.canvas.width/2 + kitty.width) / beatsToFrames(2)
+            // explosion, cog
+            let s = kontra.sprite(explodeyBall)
+            s.x = 0
+            s.y = kontra.canvas.height/2
+            sprites.push(s)
+        }
+        if (this.beat == cogBeat + 15) {
+            kitty.dx = 0
+            kitty.face = 'spaz'
+        }
+
+        // if (this.beat == cogBeat + 7) {
+        //     // gears
+        //     let gear1 = kontra.sprite(gear)
+        //     gear1.x = gear.radius
+        //     let gear2 = kontra.sprite(gear)
+        //     gear2.x = 3 * gear2.radius
+        //     let gear3 = kontra.sprite(gear)
+        //     gear3.x = kontra.canvas.width - gear3.radius
+        //     let gear4 = kontra.sprite(gear)
+        //     gear4.x = kontra.canvas.width - 3 * gear4.radius
+        //     sprites.push(gear1, gear2, gear3, gear4)
+        //     // kitty climb to top
+        //     kitty.dy = -1 * (kontra.canvas.height - kitty.height) / beatsToFrames(4)
+        //     let b = kontra.sprite(bottom)
+        //     sprites.unshift(b)
+        // }
+        // if (this.beat == cogBeat + 11) {
+        //     // kitty hold at top
+        //     kitty.dy = 0
+        // }
+        // if (this.beat == cogBeat + 12) {
+        //     // kitty fall to bottom
+        //     kitty.dy = ((kontra.canvas.height - kitty.height) / beatsToFrames(2))
+        // }
+        // if (this.beat == cogBeat + 14) {
+        //     // kitty go back to center
+        //     kitty.dy = -1 * (kontra.canvas.height/2 - kitty.height/2) / beatsToFrames(2)
+        // }
+        // if (this.beat == cogBeat + 16) {
+        //     // kitty reset
+        //     kitty.dy = 0
+        //     kitty.face = 'spaz';
+        // }
+
+        
 
     },
 })
