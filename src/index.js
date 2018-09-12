@@ -475,6 +475,11 @@ let kitty = kontra.sprite({
             kontra.context.fillStyle = '#000'
             kontra.context.fillText(this.face, this.x , this.y)
         }
+    },
+    reset: function () {
+        this.x = kontra.canvas.width/2
+        this.y = kontra.canvas.height/2
+        this.dx = this.dy = 0
     }
 })
 sprites.push(kitty)
@@ -536,6 +541,73 @@ let gear = {
     render: circleRender
 }
 
+let buzzsaw = {
+    type: 'enemy',
+    color: '#909',
+    x: kontra.canvas.width/2,
+    y: kontra.canvas.height/2,
+    collidesWith: circleCollidesWith,
+    radius: 64,
+    width:32,
+    ttl: beatsToFrames(16),
+    ticks: 0,
+    direction: 'up',
+    update: function (dt) {
+        this.ticks++;
+        this.ddy = 0;
+        this.dx = 0;
+        this.dy = 0;
+        if (this.ticks < beatsToFrames(1)) { // Move up one beat
+            if (this.direction == 'up') this.dy = -1 * this.radius / beatsToFrames(1)
+            if (this.direction == 'down') this.dy = this.radius / beatsToFrames(1)
+            if (this.direction == 'left') this.dx = -1 * this.radius / beatsToFrames(1)
+            if (this.direction == 'right') this.dx = this.radius / beatsToFrames(1)
+        } else if (this.ticks < beatsToFrames(2)) { // Hold one beat
+            // Nothing
+        } else if (this.ticks < beatsToFrames(3)) { // Move all the way up one beat
+            if (this.direction == 'up') this.y = damp(this.y, this.radius, 8, dt)
+            if (this.direction == 'down') this.y = damp(this.y, kontra.canvas.height - this.radius, 8, dt)
+            if (this.direction == 'left') this.x = damp(this.x, this.radius, 8, dt)
+            if (this.direction == 'right') this.x = damp(this.x, kontra.canvas.width - this.radius, 8, dt)
+        } else if (this.ticks < beatsToFrames(4)) { // Hold one beat
+            // Nothing
+        } else if (this.ticks < beatsToFrames(9)) { // Buzz to the side
+            // Shoot particles backward, upward
+            if (this.ticks % 4 == 0) {
+                let s = kontra.sprite(floatyBall)
+                s.x = this.x
+                s.y = this.y
+                s.radius = s.width = 16
+                s.ttl = beatsToFrames(8);
+                let r1 = Math.random() * 5 - 2.5
+                let r2 = Math.random() * 5 - 2.5
+                s.dx = {'up':-10+r1, 'down':10+r1, 'left':10+r1, 'right':-10+r1}[this.direction]
+                s.dy = {'up':10+r2, 'down':-10+r2, 'left':10+r2, 'right':-10+r2}[this.direction]
+                s.ddx = {'up':0, 'down':0, 'left':-1, 'right':1}[this.direction]
+                s.ddy = {'up':-1, 'down':1, 'left':0, 'right':0}[this.direction]
+                sprites.push(s)
+            }
+            if (Math.floor(Math.random()*16) == 0) { // One in 16 chance
+                let b = kontra.sprite(floatyBall)
+                b.x = this.x
+                b.y = this.y
+                b.radius = b.width = 8
+                b.ttl = beatsToFrames(8)
+                b.dx = {'up':0, 'down':0, 'left':5, 'right':-5}[this.direction]
+                b.dy = {'up':5, 'down':-5, 'left':0, 'right':0}[this.direction]
+                sprites.push(b)
+            }
+            if (this.direction == 'up') this.dx = (kontra.canvas.width/2 + this.radius) / beatsToFrames(5)
+            if (this.direction == 'down') this.dx = -1 * (kontra.canvas.width/2 + this.radius) / beatsToFrames(5)
+            if (this.direction == 'left') this.dy = -1 * (kontra.canvas.height/2 + this.radius) / beatsToFrames(5)
+            if (this.direction == 'right') this.dy = (kontra.canvas.height/2 + this.radius) / beatsToFrames(5)
+        }
+
+        this.advance()
+    },
+    render: circleRender
+}
+
 let bottom = {
     type: 'enemy',
     color: '#909',
@@ -557,8 +629,9 @@ let bottom = {
     }
 }
 
-var grabBeat = 31*4; // straddle the drop
+var grabBeat = 31 * 4; // straddle the drop
 var cogBeat = 35 * 4;
+var buzzsawBeat = 43 * 4;
 
 let conductor = kontra.gameLoop({
     // bpm -> fps
@@ -568,7 +641,7 @@ let conductor = kontra.gameLoop({
     update: function(dt) {
         if (this.beat === undefined) { this.beat = -1 }
         this.beat++;
-        if (this.beat === 44*4) {
+        if (this.beat === 50*4) {
             winGame()
             return
         }
@@ -611,7 +684,7 @@ let conductor = kontra.gameLoop({
         }
 
         // Grab
-        if (this.beat == grabBeat - 4 || this.beat == cogBeat - 4) {
+        if (this.beat == grabBeat - 4 || this.beat == cogBeat - 4 || this.beat == buzzsawBeat - 4) {
             // 4 spinnylines warning 2 beats, ttl 4 beats
             for (let i = 0; i < 4; i++) {
                 let s = kontra.sprite(spinnyLine)
@@ -667,6 +740,7 @@ let conductor = kontra.gameLoop({
         if (this.beat == grabBeat + 16) {
             // kitty reset
             kitty.dy = 0
+            kitty.reset()
             kitty.face = 'spaz';
             if (grabBeat == 31 * 4) grabBeat = 39*4; // Prepare for the next one
         }
@@ -712,45 +786,38 @@ let conductor = kontra.gameLoop({
         }
         if (this.beat == cogBeat + 15) {
             kitty.dx = 0
+            kitty.reset()
             kitty.face = 'spaz'
         }
 
-        // if (this.beat == cogBeat + 7) {
-        //     // gears
-        //     let gear1 = kontra.sprite(gear)
-        //     gear1.x = gear.radius
-        //     let gear2 = kontra.sprite(gear)
-        //     gear2.x = 3 * gear2.radius
-        //     let gear3 = kontra.sprite(gear)
-        //     gear3.x = kontra.canvas.width - gear3.radius
-        //     let gear4 = kontra.sprite(gear)
-        //     gear4.x = kontra.canvas.width - 3 * gear4.radius
-        //     sprites.push(gear1, gear2, gear3, gear4)
-        //     // kitty climb to top
-        //     kitty.dy = -1 * (kontra.canvas.height - kitty.height) / beatsToFrames(4)
-        //     let b = kontra.sprite(bottom)
-        //     sprites.unshift(b)
-        // }
-        // if (this.beat == cogBeat + 11) {
-        //     // kitty hold at top
-        //     kitty.dy = 0
-        // }
-        // if (this.beat == cogBeat + 12) {
-        //     // kitty fall to bottom
-        //     kitty.dy = ((kontra.canvas.height - kitty.height) / beatsToFrames(2))
-        // }
-        // if (this.beat == cogBeat + 14) {
-        //     // kitty go back to center
-        //     kitty.dy = -1 * (kontra.canvas.height/2 - kitty.height/2) / beatsToFrames(2)
-        // }
-        // if (this.beat == cogBeat + 16) {
-        //     // kitty reset
-        //     kitty.dy = 0
-        //     kitty.face = 'spaz';
-        // }
-
-        
-
+        // Buzzsaws
+        if (this.beat == buzzsawBeat + 2) { // beat 3
+            // Show face
+            kitty.face = 'buzzsaw'
+        }
+        if (this.beat == buzzsawBeat + 4) { // beat 3
+            // pop four out
+            let b1 = kontra.sprite(buzzsaw)
+            let b2 = kontra.sprite(buzzsaw)
+            b2.direction = 'right'
+            let b3 = kontra.sprite(buzzsaw)
+            b3.direction = 'down'
+            let b4 = kontra.sprite(buzzsaw)
+            b4.direction = 'left'
+            sprites.push(b1, b2, b3, b4)
+            // kitty.dx = kontra.canvas.width*0.5/beatsToFrames(2)
+        }
+        if (this.beat == buzzsawBeat + 6) {
+            // slowly rotate kitty
+        }
+        if (this.beat == buzzsawBeat + 13) {
+            // un-rotate kitty
+        }
+        if (this.beat == buzzsawBeat + 15) {
+            kitty.dx = 0
+            kitty.reset()
+            kitty.face = 'spaz'
+        }
     },
 })
 
