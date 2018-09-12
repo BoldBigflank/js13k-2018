@@ -568,7 +568,7 @@ let conductor = kontra.gameLoop({
     update: function(dt) {
         if (this.beat === undefined) { this.beat = -1 }
         this.beat++;
-        if (this.beat === 40*4) {
+        if (this.beat === 44*4) {
             winGame()
             return
         }
@@ -668,6 +668,7 @@ let conductor = kontra.gameLoop({
             // kitty reset
             kitty.dy = 0
             kitty.face = 'spaz';
+            if (grabBeat == 31 * 4) grabBeat = 39*4; // Prepare for the next one
         }
 
         // Cog
