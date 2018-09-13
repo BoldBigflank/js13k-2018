@@ -1,6 +1,6 @@
 import './css/styles.css'
 import './js/kontra'
-import { Note, Sequence } from 'tinymusic'
+import { Note, Sequence, Sample } from './js/TinyMusic'
 
 // Constants
 var tempo = 120;
@@ -66,26 +66,29 @@ function lineCollidesWith(object) {
 
 // Music
 var ac = new AudioContext()
+var buffer = ac.createBuffer( 1, ac.sampleRate * 10, ac.sampleRate );
+var data   = buffer.getChannelData( 0 );
+
+// fill the snare/hi-hat sample with white noise
+for ( var i = 0; i < data.length; ++i ) {
+  data[ i ] = Math.random() * 2 - 1;
+}
 
 var drone = ['F4 ' + 16*8],
     run = [
     '- 4' // Start with 4 beats of silence
 ],
     bass = [
-    '- 32',
-    'F2 8',
-    'Eb2 8',
-    'Bb1 8',
-    'Db2 8',
-    'F2 8', // Repeated twice
-    'Eb2 8',
-    'Bb1 8',
-    'Db2 8',
-    'F2 8',
-    'Eb2 8',
-    'Bb1 8',
-    'Db2 8'
-], runNotes = [
+    'F2 7.9',
+    '- .1',
+    'Eb2 7.9',
+    '- .1',
+    'Bb1 7.9',
+    '- .1',
+    'Db2 7.9',
+    '- .1'
+],
+runNotes = [
     'F3 ',
     'Ab3 ',
     'F4 ',
@@ -140,7 +143,11 @@ var drone = ['F4 ' + 16*8],
     'C2 0.19',
     '-  0.20'
 ], snare = [
-    
+    '- q',
+    new Sample( buffer, 'e' ),
+    '- qe',
+    new Sample( buffer, 'e' ),
+    '- e'
 ]
 
 for (var i = 0; i < 440; i++) {
@@ -155,7 +162,8 @@ var droneSeq = new Sequence( ac, tempo, drone ),
     bassSeq = new Sequence( ac, tempo, bass),
     closeSeq = new Sequence( ac, tempo, closeToMe),
     closeSeq2 = new Sequence( ac, tempo, closeToMe2),
-    kickSeq = new Sequence( ac, tempo, kick)
+    kickSeq = new Sequence( ac, tempo, kick),
+    snareSeq = new Sequence( ac, tempo, snare)
 runSeq.staccato = 0.55;
 closeSeq.staccato = 0.5;
 closeSeq2.staccato = 0.5;
@@ -167,6 +175,13 @@ kickSeq.bass.gain.value = 5;
 kickSeq.mid.frequency.value = 100;
 kickSeq.mid.gain.value = 5;
 
+snareSeq.gain.gain.value = 0.1;
+snareSeq.bass.frequency.value = 150;
+snareSeq.bass.gain.value = 4;
+snareSeq.mid.frequency.value = 800;
+snareSeq.mid.gain.value = 3;
+snareSeq.treble.frequency.value = 5000;
+snareSeq.treble.gain.value = -10;
 
 droneSeq.gain.gain.value = 0.05;
 runSeq.gain.gain.value = 0.1;
@@ -179,7 +194,6 @@ droneSeq.createCustomWave([1.0, 0.11, 0.88, 0.55, 0.77, 0.33, 0.33, 0.33, 0.44, 
 runSeq.waveType = 'triangle'
 
 // disable looping
-bassSeq.loop = false;
 droneSeq.loop = false;
 runSeq.loop = false;
 closeSeq.loop = false;
@@ -702,7 +716,7 @@ let conductor = kontra.gameLoop({
     update: function(dt) {
         if (this.beat === undefined) { this.beat = -1 }
         this.beat++;
-        if (this.beat === 71*4) {
+        if (this.beat === 73*4) {
             winGame()
             return
         }
@@ -712,6 +726,11 @@ let conductor = kontra.gameLoop({
             tearFactory.start();
             droneSeq.play();
             runSeq.play();
+        }
+        if (this.beat === 8 * 4) {
+            console.log("kick the bass")
+            bassSeq.staccato = 0;
+            bassSeq.smoothing = 0;
             bassSeq.play();
         }
         if (this.beat < 32 * 4) { // Intro stuff
@@ -728,6 +747,10 @@ let conductor = kontra.gameLoop({
             droneSeq.stop();
             closeSeq.gain.gain.value = 0.1 // Double the volume
             kickSeq.play();
+            snareSeq.play();
+            bassSeq.staccato = 0.4;
+            bassSeq.smoothing = 0.9;
+            bassSeq.play();
         }
 
         // Shapes
@@ -1049,6 +1072,7 @@ let startGame = function() {
     closeSeq.stop()
     closeSeq2.stop()
     kickSeq.stop()
+    snareSeq.stop()
     
     // Game
 
@@ -1072,6 +1096,7 @@ let stopAll = function() {
     closeSeq.stop()
     closeSeq2.stop()
     kickSeq.stop()
+    snareSeq.stop()
     
     loop.stop()
     conductor.stop()
