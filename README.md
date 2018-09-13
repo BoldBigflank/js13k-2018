@@ -1,40 +1,25 @@
 js13k-2018
 
-Player
-X moves with arrow keys
-X moves diagonally
-X rotates to face direction
-X invuln frames/dash frames/stun frames
-X Rocket particles
-X Health/display
-X Win state
-X Lose state
-X Reset everything/restart
+X Buzzsaws
 
-X Tears
-Adjust tears to better match music
 
-Conductor(Game Loop)
-X Watch the time
-X Play music
-X Create obstacles at specific times
+Music
+X snare
+X bass for phases
+melody in intro
 
-Obstacles
-X collision
-position/rotation functions?
-X ttl
-delay
-Associated music?
+Kitty
+rotation / delta rotation
+X Draw the faces
+Make it spaz
 
-Obstacle types
-Blue square
-X tears
-rotating/bursting lines
-fireworks
+Screen Shake
+X Adjust tears to better match music
+
 
 Sounds
 Different sounds
-4 layers, play together
+4 players, play together
 Change tempo
 
 Multiplayer
