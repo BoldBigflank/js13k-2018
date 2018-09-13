@@ -653,8 +653,8 @@ let buzzsaw = {
                 s.y = this.y
                 s.radius = s.width = 16
                 s.ttl = beatsToFrames(8);
-                let r1 = Math.random() * 5 - 2.5
-                let r2 = Math.random() * 5 - 2.5
+                let r1 = Math.random() * 10 - 2.5
+                let r2 = Math.random() * 10 - 2.5
                 s.dx = {'up':-10+r1, 'down':10+r1, 'left':10+r1, 'right':-10+r1}[this.direction]
                 s.dy = {'up':10+r2, 'down':-10+r2, 'left':10+r2, 'right':-10+r2}[this.direction]
                 s.ddx = {'up':0, 'down':0, 'left':-1, 'right':1}[this.direction]
@@ -743,6 +743,8 @@ let conductor = kontra.gameLoop({
             }
         }
         if (this.beat === 32*4) { // The Drop
+            tearFactory.stop()
+            runSeq.stop()
             bassSeq.stop();
             droneSeq.stop();
             closeSeq.gain.gain.value = 0.1 // Double the volume
@@ -928,6 +930,32 @@ let loop = kontra.gameLoop({  // create the main game loop
                     let angle = Math.random()*2*Math.PI;
                     ship.dx = Math.cos(angle)*8;
                     ship.dy = Math.sin(angle)*8;
+                    // Bunch of particles
+                    for (let i = 0; i < 18; i++) {
+                        let particle = kontra.sprite({
+                            type:'particle',
+                            x: ship.x,
+                            y: ship.y,
+                            dx: 24 * Math.cos(degreesToRadians(i*20)),
+                            dy: 24 * Math.sin(degreesToRadians(i*20)), 
+                            ttl: 20,
+                            width:16,
+                            height:16,
+                            color:'#fff',
+                            update: function (dt) {
+                                // this.color = '#' + (this.ttl*15).toString(16) + (this.ttl*15).toString(16) + '00'
+                                this.advance()
+                            }, render: function () {
+                                kontra.context.save()
+                                kontra.context.fillStyle = this.color
+                                kontra.context.beginPath()
+                                kontra.context.arc(this.x, this.y, 16, 0, 2*Math.PI)
+                                kontra.context.fill()
+                                kontra.context.restore()
+                            }
+                        })
+                        sprites.push(particle)
+                    }
                 } else {
                     gameOver()
                 }
