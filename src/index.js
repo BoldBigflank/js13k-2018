@@ -469,11 +469,69 @@ let kitty = kontra.sprite({
         kontra.context.fillStyle = this.color
         kontra.context.fillRect(this.x - this.width/2, this.y - this.height/2, this.width, this.height)
         if (this.face == 'grab') {
-            kontra.context.fillStyle = '#000'
-            kontra.context.fillText("GRAB", this.x, this.y)
+            let x = kontra.context
+            x.fillStyle = '#000'
+            // kontra.context.fillText("GRAB", this.x, this.y)
+            x.save()
+            x.translate(this.x - this.width/2, this.y - this.height/2)
+            x.strokeStyle = "#000000"
+            x.fillStyle = '#000000'
+            x.lineWidth = this.height*.10
+            x.beginPath()
+            x.moveTo(this.width*.20,this.height*.30)
+            x.lineTo(this.width*.40,this.height*.40)
+            x.moveTo(this.width*.60,this.height*.40)
+            x.lineTo(this.width*.80,this.height*.30)
+            x.moveTo(this.width*.28,this.height*.33)
+            x.lineTo(this.width*.28,this.height*.50)
+            x.stroke()
+            x.beginPath()
+            x.arc(this.width*.50, this.height*.90, this.height*.20, Math.PI * 1.25, -Math.PI * 0.25)
+            x.stroke()
+            x.restore()
+        } else if (this.face == 'cog') {
+            let x = kontra.context
+            x.fillStyle = '#000'
+            // kontra.context.fillText("GRAB", this.x, this.y)
+            x.save()
+            x.translate(this.x - this.width/2, this.y - this.height/2)
+            x.strokeStyle = "#000000"
+            x.fillStyle = '#000000'
+            x.lineWidth = this.height*.10
+            x.beginPath()
+            x.arc(this.width*.30, this.height*.40, this.height*.20, 0, 2 * Math.PI)
+            x.stroke()
+            x.beginPath()
+            x.arc(this.width*.70, this.height*.50, this.height*.20, 0, 2 * Math.PI)
+            x.stroke()
+            x.fill()
+            x.beginPath()
+            x.arc(this.width*.50, this.height*1.0, this.height*.20, Math.PI * 1.25, -Math.PI * 0.25)
+            x.stroke()
+            x.restore()
+        } else if (this.face == 'buzzsaw') {
+            let x = kontra.context
+            x.fillStyle = '#000'
+            // kontra.context.fillText("GRAB", this.x, this.y)
+            x.save()
+            x.translate(this.x - this.width/2, this.y - this.height/2)
+            x.strokeStyle = "#000000"
+            x.fillStyle = '#000000'
+            x.lineWidth = this.height*.10
+            x.beginPath()
+            x.moveTo(this.width*.28,this.height*.4)
+            x.lineTo(this.width*.28,this.height*.54)
+            x.stroke()
+            x.beginPath()
+            x.arc(this.width*.3, this.height*.4, this.height*.1, 0, 2 * Math.PI)
+            x.fill()
+            x.beginPath()
+            x.arc(this.width*.7, this.height*.33, this.height*.2, 0, 2 * Math.PI)
+            x.fill()
+            x.restore()
         } else { // DEBUG show the face
             kontra.context.fillStyle = '#000'
-            kontra.context.fillText(this.face, this.x , this.y)
+            // kontra.context.fillText(this.face, this.x , this.y)
         }
     },
     reset: function () {
@@ -481,6 +539,7 @@ let kitty = kontra.sprite({
         this.y = kontra.canvas.height/2
         this.dx = this.dy = 0
         this.face = ''
+
     }
 })
 sprites.push(kitty)
@@ -705,7 +764,7 @@ let conductor = kontra.gameLoop({
             let l = kontra.sprite(hand)
             l.direction = -1
             let r = kontra.sprite(hand)
-            sprites.push(l, r)
+            sprites.unshift(l, r)
         }
         if (this.beat == grabBeat + 6) {
             // Drop kitty from half
@@ -810,7 +869,7 @@ let conductor = kontra.gameLoop({
             b3.direction = 'down'
             let b4 = kontra.sprite(buzzsaw)
             b4.direction = 'left'
-            sprites.push(b1, b2, b3, b4)
+            sprites.unshift(b1, b2, b3, b4)
             // kitty.dx = kontra.canvas.width*0.5/beatsToFrames(2)
         }
         if (this.beat == buzzsawBeat + 6) {
@@ -999,6 +1058,10 @@ let startGame = function() {
     if (conductor.isStopped) conductor.start();
     // Music
     kitty.reset()
+    grabBeat = 31 * 4;
+    cogBeat = 35 * 4;
+    buzzsawBeat = 43 * 4;
+
 }
 
 let stopAll = function() {
