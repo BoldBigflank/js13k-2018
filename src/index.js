@@ -544,8 +544,26 @@ let kitty = kontra.sprite({
             x.fill()
             x.restore()
         } else { // DEBUG show the face
-            kontra.context.fillStyle = '#000'
-            // kontra.context.fillText(this.face, this.x , this.y)
+            let x = kontra.context
+            x.fillStyle = '#000'
+            // kontra.context.fillText("GRAB", this.x, this.y)
+            x.save()
+            x.translate(this.x - this.width/2, this.y - this.height/2)
+            x.strokeStyle = "#000000"
+            x.fillStyle = '#000000'
+            x.lineWidth = this.height*.10
+            x.beginPath()
+            x.moveTo(this.width*.20,this.height*.60) // left eye
+            x.lineTo(this.width*.40,this.height*.50)
+            x.moveTo(this.width*.60,this.height*.50) // right eye
+            x.lineTo(this.width*.80,this.height*.60)
+            x.moveTo(this.width*.28,this.height*.56) // tear
+            x.lineTo(this.width*.28,this.height*.74)
+            x.stroke()
+            x.beginPath()
+            x.arc(this.width*.50, this.height*1, this.height*.20, Math.PI * 1.25, -Math.PI * 0.25)
+            x.stroke()
+            x.restore()
         }
     },
     reset: function () {
