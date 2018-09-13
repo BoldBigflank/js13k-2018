@@ -480,6 +480,7 @@ let kitty = kontra.sprite({
         this.x = kontra.canvas.width/2
         this.y = kontra.canvas.height/2
         this.dx = this.dy = 0
+        this.face = ''
     }
 })
 sprites.push(kitty)
@@ -629,9 +630,10 @@ let bottom = {
     }
 }
 
-var grabBeat = 31 * 4; // straddle the drop
-var cogBeat = 35 * 4;
-var buzzsawBeat = 43 * 4;
+// Beat == 
+var grabBeat = 31 * 4; // and 39, 55, 63
+var cogBeat = 35 * 4; // and 47, 59
+var buzzsawBeat = 43 * 4; // and 51, 67
 
 let conductor = kontra.gameLoop({
     // bpm -> fps
@@ -641,7 +643,7 @@ let conductor = kontra.gameLoop({
     update: function(dt) {
         if (this.beat === undefined) { this.beat = -1 }
         this.beat++;
-        if (this.beat === 50*4) {
+        if (this.beat === 71*4) {
             winGame()
             return
         }
@@ -742,6 +744,8 @@ let conductor = kontra.gameLoop({
             kitty.dy = 0
             kitty.reset()
             kitty.face = 'spaz';
+            if (grabBeat == 55 * 4) grabBeat = 63*4; // Prepare for the next one
+            if (grabBeat == 39 * 4) grabBeat = 55*4; // Prepare for the next one
             if (grabBeat == 31 * 4) grabBeat = 39*4; // Prepare for the next one
         }
 
@@ -788,6 +792,8 @@ let conductor = kontra.gameLoop({
             kitty.dx = 0
             kitty.reset()
             kitty.face = 'spaz'
+            if (cogBeat == 47 * 4) cogBeat = 59*4; // Prepare for the next one
+            if (cogBeat == 35 * 4) cogBeat = 47*4; // Prepare for the next one
         }
 
         // Buzzsaws
@@ -817,6 +823,9 @@ let conductor = kontra.gameLoop({
             kitty.dx = 0
             kitty.reset()
             kitty.face = 'spaz'
+            if (buzzsawBeat == 51 * 4) buzzsawBeat = 67*4; // Prepare for the next one
+            if (buzzsawBeat == 43 * 4) buzzsawBeat = 51*4; // Prepare for the next one
+
         }
     },
 })
@@ -989,6 +998,7 @@ let startGame = function() {
     conductor.beat = -1;
     if (conductor.isStopped) conductor.start();
     // Music
+    kitty.reset()
 }
 
 let stopAll = function() {
