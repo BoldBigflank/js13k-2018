@@ -352,10 +352,10 @@ let ship = kontra.sprite({
             this.rotation += 4;
         } else {
             this.dx = this.dy = 0;
-            if (kontra.keys.pressed('w')) { this.dy += -4; }
-            if (kontra.keys.pressed('s')) { this.dy += 4; }
-            if (kontra.keys.pressed('a')) { this.dx += -4; }
-            if (kontra.keys.pressed('d')) { this.dx += 4; }
+            if (kontra.keys.pressed('w') || kontra.keys.pressed('up')) { this.dy += -4; }
+            if (kontra.keys.pressed('s') || kontra.keys.pressed('down')) { this.dy += 4; }
+            if (kontra.keys.pressed('a') || kontra.keys.pressed('left')) { this.dx += -4; }
+            if (kontra.keys.pressed('d') || kontra.keys.pressed('right')) { this.dx += 4; }
             if (this.dx && this.dy) {
                 this.dx *= 0.707;
                 this.dy *= 0.707;
@@ -1020,7 +1020,7 @@ let titleText = kontra.sprite({
         kontra.context.fillText("CONTROLS", 20, kontra.canvas.height * 0.75)
         kontra.context.fillStyle = "#0aa"
         kontra.context.font = "24px Verdana"
-        kontra.context.fillText("WASD to move", 20, kontra.canvas.height*0.75+30)
+        kontra.context.fillText("WASD/Arrow keys to move", 20, kontra.canvas.height*0.75+30)
         kontra.context.fillText("Space to dash", 20, kontra.canvas.height*0.75+60)
         kontra.context.fillText("Space to dash", 20, kontra.canvas.height*0.75+60)
         kontra.context.textAlign = 'center'
